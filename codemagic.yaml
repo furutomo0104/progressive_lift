@@ -4,10 +4,11 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      # Codemagic UI（Team integrations → Developer Portal）で設定した API キー名と一致させる
       app_store_connect: Codemagic
     environment:
       flutter: stable
+      xcode: latest
+      cocoapods: default
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.overload.progressiveLift
@@ -16,8 +17,14 @@ workflows:
         script: flutter pub get
       - name: Code generation
         script: dart run build_runner build --delete-conflicting-outputs
+      - name: Install CocoaPods dependencies
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles --project ios/Runner.xcodeproj
       - name: Build IPA
-        script: flutter build ipa --release
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
