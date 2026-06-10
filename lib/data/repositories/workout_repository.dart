@@ -125,6 +125,35 @@ class WorkoutRepository {
     return set;
   }
 
+  Future<void> deleteSet(int setId, int exerciseRecordId) async {
+    await _isar.writeTxn(() async {
+      await _isar.exerciseSets.delete(setId);
+      final remaining = await _isar.exerciseSets
+          .where()
+          .exerciseRecordIdEqualTo(exerciseRecordId)
+          .sortBySetOrder()
+          .findAll();
+      for (var i = 0; i < remaining.length; i++) {
+        remaining[i].setOrder = i;
+        await _isar.exerciseSets.put(remaining[i]);
+      }
+    });
+  }
+
+  Future<void> deleteExercise(int exerciseRecordId) async {
+    await _isar.writeTxn(() async {
+      final sets = await _isar.exerciseSets
+          .where()
+          .exerciseRecordIdEqualTo(exerciseRecordId)
+          .findAll();
+      final setIds = sets.map((s) => s.id).toList();
+      if (setIds.isNotEmpty) {
+        await _isar.exerciseSets.deleteAll(setIds);
+      }
+      await _isar.exerciseRecords.delete(exerciseRecordId);
+    });
+  }
+
   Future<List<TopSetPoint>> getTopSetSeries(String exerciseKey) async {
     final records = await _isar.exerciseRecords
         .where()

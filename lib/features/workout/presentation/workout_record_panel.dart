@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/features/workout/presentation/add_exercise_sheet.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:progressive_lift/features/workout/presentation/exercise_card.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
@@ -145,20 +146,27 @@ class _WorkoutRecordBody extends HookConsumerWidget {
         Expanded(
           child: exercises.isEmpty
               ? _EmptyState(onAdd: openAddExercise)
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: exercises.length,
-                  itemBuilder: (_, i) {
-                    final ex = exercises[i];
-                    return ExerciseCard(
-                      exercise: ex,
-                      sets: setsByExercise[ex.id] ?? [],
-                      expanded: expandedId.value == ex.id,
-                      onToggle: () => expandedId.value =
-                          expandedId.value == ex.id ? null : ex.id,
-                      onSetAdded: onChanged,
-                    );
-                  },
+              : SlidableAutoCloseBehavior(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    itemCount: exercises.length,
+                    itemBuilder: (_, i) {
+                      final ex = exercises[i];
+                      return ExerciseCard(
+                        exercise: ex,
+                        sets: setsByExercise[ex.id] ?? [],
+                        expanded: expandedId.value == ex.id,
+                        onToggle: () => expandedId.value =
+                            expandedId.value == ex.id ? null : ex.id,
+                        onChanged: () {
+                          if (!exercises.any((e) => e.id == expandedId.value)) {
+                            expandedId.value = null;
+                          }
+                          onChanged();
+                        },
+                      );
+                    },
+                  ),
                 ),
         ),
       ],
