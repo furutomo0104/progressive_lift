@@ -1,0 +1,22 @@
+workflows:
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.overload.progressiveLift
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Code generation
+        script: dart run build_runner build --delete-conflicting-outputs
+      - name: Build IPA
+        script: flutter build ipa --release
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
