@@ -29,8 +29,10 @@ class ExerciseCatalog {
     ExerciseTemplate(key: 'rdl', name: 'ルーマニアンデッドリフト', muscleGroup: MuscleGroup.legs),
     // 肩
     ExerciseTemplate(key: 'barbell_ohp', name: 'バーベルショルダープレス', muscleGroup: MuscleGroup.shoulders),
-    // 腕
-    ExerciseTemplate(key: 'barbell_curl', name: 'バーベルカール', muscleGroup: MuscleGroup.arms),
+    // 二頭
+    ExerciseTemplate(key: 'barbell_curl', name: 'バーベルカール', muscleGroup: MuscleGroup.biceps),
+    // 三頭
+    ExerciseTemplate(key: 'tricep_extension', name: 'ライイングエクステンション', muscleGroup: MuscleGroup.triceps),
     // 体幹
     ExerciseTemplate(key: 'plank', name: 'プランク', muscleGroup: MuscleGroup.core),
   ];

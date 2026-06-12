@@ -20,7 +20,8 @@ class MuscleGroupDots extends StatelessWidget {
       return SizedBox(height: dotSize + 2);
     }
 
-    final sorted = MuscleGroup.values.where(groups.contains).toList();
+    final sorted =
+        MuscleGroup.selectable.where((g) => groups.contains(g)).toList();
     final visible = sorted.take(maxVisible).toList();
     final overflow = sorted.length - visible.length;
     final multiPart = sorted.length >= 2;

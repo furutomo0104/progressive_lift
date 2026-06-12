@@ -2,9 +2,11 @@ import 'package:isar/isar.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/core/constants/exercise_catalog.dart';
 import 'package:progressive_lift/data/models/custom_exercise_template.dart';
+import 'package:progressive_lift/data/models/exercise_preference.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/data/models/workout_session.dart';
+import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 
@@ -50,7 +52,10 @@ class WorkoutRepository {
             .where()
             .sessionIdEqualTo(session.id)
             .findAll();
-        final groups = records.map((r) => r.muscleGroup).toSet();
+        final groups = records
+            .map((r) => r.muscleGroup.displayGroup)
+            .where((g) => !g.isLegacy)
+            .toSet();
         summaries.add(
           DayWorkoutSummary(
             date: normalizeDate(session.date),
@@ -114,15 +119,33 @@ class WorkoutRepository {
     required int exerciseRecordId,
     required double weightKg,
     required int reps,
+    String? memo,
   }) async {
     final existing = await getSetsForExercise(exerciseRecordId);
     final set = ExerciseSet()
       ..exerciseRecordId = exerciseRecordId
       ..weightKg = weightKg
       ..reps = reps
+      ..memo = memo?.trim().isEmpty == true ? null : memo?.trim()
+      ..recordedAt = DateTime.now()
       ..setOrder = existing.length;
     await _isar.writeTxn(() => _isar.exerciseSets.put(set));
     return set;
+  }
+
+  Future<void> updateSet({
+    required int setId,
+    required int exerciseRecordId,
+    required double weightKg,
+    required int reps,
+    String? memo,
+  }) async {
+    final set = await _isar.exerciseSets.get(setId);
+    if (set == null) return;
+    set.weightKg = weightKg;
+    set.reps = reps;
+    set.memo = memo?.trim().isEmpty == true ? null : memo?.trim();
+    await _isar.writeTxn(() => _isar.exerciseSets.put(set));
   }
 
   Future<void> deleteSet(int setId, int exerciseRecordId) async {
@@ -214,6 +237,102 @@ class WorkoutRepository {
     return _isar.customExerciseTemplates.where().sortByCreatedAtDesc().findAll();
   }
 
+  Future<List<ExercisePreference>> getExercisePreferences() {
+    return _isar.exercisePreferences.where().findAll();
+  }
+
+  Future<ExercisePreference?> getPreferenceForKey(String exerciseKey) {
+    return _isar.exercisePreferences
+        .where()
+        .exerciseKeyEqualTo(exerciseKey)
+        .findFirst();
+  }
+
+  Future<List<SelectableExercise>> getSelectableExercises() async {
+    final prefs = await getExercisePreferences();
+    final prefByKey = {for (final p in prefs) p.exerciseKey: p};
+
+    final items = <SelectableExercise>[];
+
+    for (final t in ExerciseCatalog.templates) {
+      final pref = prefByKey[t.key];
+      if (pref?.isHidden == true) continue;
+      items.add(
+        SelectableExercise(
+          exerciseKey: t.key,
+          name: pref?.nameOverride ?? t.name,
+          muscleGroup: pref != null && pref.hasMuscleGroupOverride
+              ? pref.muscleGroupOverride
+              : t.muscleGroup,
+          isCustom: false,
+        ),
+      );
+    }
+
+    final customs = await getCustomTemplates();
+    for (final c in customs) {
+      items.add(
+        SelectableExercise(
+          exerciseKey: c.exerciseKey,
+          name: c.name,
+          muscleGroup: c.muscleGroup.displayGroup,
+          isCustom: true,
+          customTemplateId: c.id,
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  Future<void> updateCustomTemplate({
+    required int id,
+    required String name,
+    required MuscleGroup muscleGroup,
+  }) async {
+    final template = await _isar.customExerciseTemplates.get(id);
+    if (template == null) return;
+    template.name = name.trim();
+    template.muscleGroup = muscleGroup;
+    await _isar.writeTxn(() => _isar.customExerciseTemplates.put(template));
+  }
+
+  Future<void> deleteCustomTemplate(int id) async {
+    await _isar.writeTxn(() => _isar.customExerciseTemplates.delete(id));
+  }
+
+  Future<void> updatePresetExercise({
+    required String exerciseKey,
+    required String name,
+    required MuscleGroup muscleGroup,
+  }) async {
+    final preset = ExerciseCatalog.findByKey(exerciseKey);
+    if (preset == null) return;
+
+    var pref = await getPreferenceForKey(exerciseKey);
+    pref ??= ExercisePreference()..exerciseKey = exerciseKey;
+
+    final trimmed = name.trim();
+    pref.nameOverride = trimmed == preset.name ? null : trimmed;
+    if (muscleGroup == preset.muscleGroup) {
+      pref.hasMuscleGroupOverride = false;
+      pref.muscleGroupOverride = preset.muscleGroup;
+    } else {
+      pref.hasMuscleGroupOverride = true;
+      pref.muscleGroupOverride = muscleGroup;
+    }
+    pref.isHidden = false;
+
+    await _isar.writeTxn(() => _isar.exercisePreferences.put(pref!));
+  }
+
+  Future<void> hidePresetExercise(String exerciseKey) async {
+    var pref = await getPreferenceForKey(exerciseKey);
+    pref ??= ExercisePreference()..exerciseKey = exerciseKey;
+    pref.isHidden = true;
+    await _isar.writeTxn(() => _isar.exercisePreferences.put(pref!));
+  }
+
   Future<CustomExerciseTemplate> saveCustomTemplate({
     required String name,
     required MuscleGroup muscleGroup,
@@ -230,6 +349,9 @@ class WorkoutRepository {
   }
 
   Future<String> resolveExerciseName(String exerciseKey) async {
+    final pref = await getPreferenceForKey(exerciseKey);
+    if (pref?.nameOverride != null) return pref!.nameOverride!;
+
     final preset = ExerciseCatalog.findByKey(exerciseKey);
     if (preset != null) return preset.name;
 

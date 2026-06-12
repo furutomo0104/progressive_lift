@@ -346,7 +346,7 @@ class _AiSuggestionProviderElement
 }
 
 String _$customExerciseTemplatesHash() =>
-    r'5d49f3376a47a63ab36618c9dcfbed8b69151608';
+    r'6dfcd77e0dc4f629524e2d01d6fd3ef1fe120b90';
 
 /// See also [customExerciseTemplates].
 @ProviderFor(customExerciseTemplates)
@@ -363,6 +363,24 @@ final customExerciseTemplatesProvider =
 
 typedef CustomExerciseTemplatesRef
     = AutoDisposeFutureProviderRef<List<CustomExerciseTemplate>>;
+String _$selectableExercisesHash() =>
+    r'33b8e390b9358ee4fb7b059832b9bc70b7a165a3';
+
+/// See also [selectableExercises].
+@ProviderFor(selectableExercises)
+final selectableExercisesProvider =
+    AutoDisposeFutureProvider<List<SelectableExercise>>.internal(
+  selectableExercises,
+  name: r'selectableExercisesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$selectableExercisesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef SelectableExercisesRef
+    = AutoDisposeFutureProviderRef<List<SelectableExercise>>;
 String _$exerciseNameHash() => r'029752e7a433db9efa4e9893f2b33fb3ea2d1c85';
 
 /// See also [exerciseName].
@@ -491,6 +509,142 @@ class _ExerciseNameProviderElement
   String get exerciseKey => (origin as ExerciseNameProvider).exerciseKey;
 }
 
+String _$calendarSummariesHash() => r'd1102dc5f44a8521a13100db8cfe6d2e9e9acc65';
+
+/// See also [calendarSummaries].
+@ProviderFor(calendarSummaries)
+const calendarSummariesProvider = CalendarSummariesFamily();
+
+/// See also [calendarSummaries].
+class CalendarSummariesFamily
+    extends Family<AsyncValue<Map<DateTime, DayWorkoutSummary>>> {
+  /// See also [calendarSummaries].
+  const CalendarSummariesFamily();
+
+  /// See also [calendarSummaries].
+  CalendarSummariesProvider call(
+    DateTime monthAnchor,
+  ) {
+    return CalendarSummariesProvider(
+      monthAnchor,
+    );
+  }
+
+  @override
+  CalendarSummariesProvider getProviderOverride(
+    covariant CalendarSummariesProvider provider,
+  ) {
+    return call(
+      provider.monthAnchor,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'calendarSummariesProvider';
+}
+
+/// See also [calendarSummaries].
+class CalendarSummariesProvider
+    extends AutoDisposeFutureProvider<Map<DateTime, DayWorkoutSummary>> {
+  /// See also [calendarSummaries].
+  CalendarSummariesProvider(
+    DateTime monthAnchor,
+  ) : this._internal(
+          (ref) => calendarSummaries(
+            ref as CalendarSummariesRef,
+            monthAnchor,
+          ),
+          from: calendarSummariesProvider,
+          name: r'calendarSummariesProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$calendarSummariesHash,
+          dependencies: CalendarSummariesFamily._dependencies,
+          allTransitiveDependencies:
+              CalendarSummariesFamily._allTransitiveDependencies,
+          monthAnchor: monthAnchor,
+        );
+
+  CalendarSummariesProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.monthAnchor,
+  }) : super.internal();
+
+  final DateTime monthAnchor;
+
+  @override
+  Override overrideWith(
+    FutureOr<Map<DateTime, DayWorkoutSummary>> Function(
+            CalendarSummariesRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CalendarSummariesProvider._internal(
+        (ref) => create(ref as CalendarSummariesRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        monthAnchor: monthAnchor,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Map<DateTime, DayWorkoutSummary>>
+      createElement() {
+    return _CalendarSummariesProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CalendarSummariesProvider &&
+        other.monthAnchor == monthAnchor;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, monthAnchor.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin CalendarSummariesRef
+    on AutoDisposeFutureProviderRef<Map<DateTime, DayWorkoutSummary>> {
+  /// The parameter `monthAnchor` of this provider.
+  DateTime get monthAnchor;
+}
+
+class _CalendarSummariesProviderElement
+    extends AutoDisposeFutureProviderElement<Map<DateTime, DayWorkoutSummary>>
+    with CalendarSummariesRef {
+  _CalendarSummariesProviderElement(super.provider);
+
+  @override
+  DateTime get monthAnchor => (origin as CalendarSummariesProvider).monthAnchor;
+}
+
 String _$premiumToggleHash() => r'9ca71e85f74a82787014eadfaa87a718e2df0265';
 
 /// See also [PremiumToggle].
@@ -507,5 +661,41 @@ final premiumToggleProvider =
 );
 
 typedef _$PremiumToggle = AutoDisposeNotifier<bool>;
+String _$exerciseCatalogTickHash() =>
+    r'c92053733795881eab560ffd9319e9b7d91b9bb8';
+
+/// See also [ExerciseCatalogTick].
+@ProviderFor(ExerciseCatalogTick)
+final exerciseCatalogTickProvider =
+    AutoDisposeNotifierProvider<ExerciseCatalogTick, int>.internal(
+  ExerciseCatalogTick.new,
+  name: r'exerciseCatalogTickProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$exerciseCatalogTickHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ExerciseCatalogTick = AutoDisposeNotifier<int>;
+String _$calendarRefreshTickHash() =>
+    r'7c355d1eeec04e9e824aa0858b3000ddfee797d2';
+
+/// カレンダー再読み込み用（記録変更時に bump）
+///
+/// Copied from [CalendarRefreshTick].
+@ProviderFor(CalendarRefreshTick)
+final calendarRefreshTickProvider =
+    AutoDisposeNotifierProvider<CalendarRefreshTick, int>.internal(
+  CalendarRefreshTick.new,
+  name: r'calendarRefreshTickProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$calendarRefreshTickHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$CalendarRefreshTick = AutoDisposeNotifier<int>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -47,6 +47,7 @@ class SeedData {
             ..exerciseRecordId = record.id
             ..weightKg = w
             ..reps = r
+            ..recordedAt = day.add(Duration(hours: 10 + order))
             ..setOrder = order++;
           await isar.exerciseSets.put(set);
         }
@@ -67,6 +68,8 @@ class SeedData {
                 ..exerciseRecordId = squat.id
                 ..weightKg = 100 + i * 2.5
                 ..reps = 6 - s
+                ..recordedAt =
+                    day.add(Duration(days: 1, hours: 10 + s))
                 ..setOrder = s,
             );
           }

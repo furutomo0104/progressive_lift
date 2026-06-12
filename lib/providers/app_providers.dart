@@ -4,6 +4,7 @@ import 'package:progressive_lift/data/models/custom_exercise_template.dart';
 import 'package:progressive_lift/data/local/isar_service.dart';
 import 'package:progressive_lift/data/local/seed_data.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
+import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/ai_suggest_service.dart';
 import 'package:progressive_lift/domain/services/subscription_service.dart';
@@ -66,12 +67,52 @@ Future<String?> aiSuggestion(AiSuggestionRef ref, String exerciseKey) async {
 Future<List<CustomExerciseTemplate>> customExerciseTemplates(
   CustomExerciseTemplatesRef ref,
 ) async {
+  ref.watch(exerciseCatalogTickProvider);
   final repo = await ref.watch(workoutRepositoryProvider.future);
   return repo.getCustomTemplates();
+}
+
+@riverpod
+class ExerciseCatalogTick extends _$ExerciseCatalogTick {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+@riverpod
+Future<List<SelectableExercise>> selectableExercises(
+  SelectableExercisesRef ref,
+) async {
+  ref.watch(exerciseCatalogTickProvider);
+  final repo = await ref.watch(workoutRepositoryProvider.future);
+  return repo.getSelectableExercises();
 }
 
 @riverpod
 Future<String> exerciseName(ExerciseNameRef ref, String exerciseKey) async {
   final repo = await ref.watch(workoutRepositoryProvider.future);
   return repo.resolveExerciseName(exerciseKey);
+}
+
+/// カレンダー再読み込み用（記録変更時に bump）
+@riverpod
+class CalendarRefreshTick extends _$CalendarRefreshTick {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+@riverpod
+Future<Map<DateTime, DayWorkoutSummary>> calendarSummaries(
+  CalendarSummariesRef ref,
+  DateTime monthAnchor,
+) async {
+  ref.watch(calendarRefreshTickProvider);
+  final repo = await ref.watch(workoutRepositoryProvider.future);
+  final list = await repo.getMonthSummaries(monthAnchor);
+  return {
+    for (final s in list) WorkoutRepository.normalizeDate(s.date): s,
+  };
 }

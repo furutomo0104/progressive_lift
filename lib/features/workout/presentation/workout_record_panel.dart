@@ -18,6 +18,7 @@ class WorkoutRecordPanel extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repoAsync = ref.watch(workoutRepositoryProvider);
     final refresh = useState(0);
+    final expandedId = useState<int?>(null);
 
     return repoAsync.when(
       data: (repo) => FutureBuilder(
@@ -33,7 +34,12 @@ class WorkoutRecordPanel extends HookConsumerWidget {
             session: data.session,
             exercises: data.exercises,
             setsByExercise: data.setsByExercise,
-            onChanged: () => refresh.value++,
+            expandedId: expandedId.value,
+            onExpandedChanged: (id) => expandedId.value = id,
+            onChanged: () {
+              ref.read(calendarRefreshTickProvider.notifier).bump();
+              refresh.value++;
+            },
           );
         },
       ),
@@ -75,6 +81,8 @@ class _WorkoutRecordBody extends HookConsumerWidget {
     required this.session,
     required this.exercises,
     required this.setsByExercise,
+    required this.expandedId,
+    required this.onExpandedChanged,
     required this.onChanged,
   });
 
@@ -82,12 +90,12 @@ class _WorkoutRecordBody extends HookConsumerWidget {
   final dynamic session;
   final List<ExerciseRecord> exercises;
   final Map<int, List<ExerciseSet>> setsByExercise;
+  final int? expandedId;
+  final ValueChanged<int?> onExpandedChanged;
   final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final expandedId = useState<int?>(null);
-
     Future<void> openAddExercise() async {
       final result = await showAddExerciseSheet(context);
       if (result == null) return;
@@ -98,7 +106,7 @@ class _WorkoutRecordBody extends HookConsumerWidget {
         name: result.name,
         muscleGroup: result.muscleGroup,
       );
-      expandedId.value = record.id;
+      onExpandedChanged(record.id);
       onChanged();
     }
 
@@ -153,14 +161,16 @@ class _WorkoutRecordBody extends HookConsumerWidget {
                     itemBuilder: (_, i) {
                       final ex = exercises[i];
                       return ExerciseCard(
+                        key: ValueKey('exercise-card-${ex.id}'),
                         exercise: ex,
                         sets: setsByExercise[ex.id] ?? [],
-                        expanded: expandedId.value == ex.id,
-                        onToggle: () => expandedId.value =
-                            expandedId.value == ex.id ? null : ex.id,
+                        expanded: expandedId == ex.id,
+                        onToggle: () => onExpandedChanged(
+                          expandedId == ex.id ? null : ex.id,
+                        ),
                         onChanged: () {
-                          if (!exercises.any((e) => e.id == expandedId.value)) {
-                            expandedId.value = null;
+                          if (!exercises.any((e) => e.id == expandedId)) {
+                            onExpandedChanged(null);
                           }
                           onChanged();
                         },

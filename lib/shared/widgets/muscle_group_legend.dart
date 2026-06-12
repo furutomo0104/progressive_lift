@@ -11,7 +11,7 @@ class MuscleGroupLegend extends StatelessWidget {
       spacing: 6,
       runSpacing: 6,
       alignment: WrapAlignment.center,
-      children: MuscleGroup.values
+      children: MuscleGroup.selectable
           .map((g) => MuscleGroupChip(group: g, compact: true))
           .toList(),
     );

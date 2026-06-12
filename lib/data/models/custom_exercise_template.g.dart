@@ -150,6 +150,8 @@ const _CustomExerciseTemplatemuscleGroupEnumValueMap = {
   'shoulders': 3,
   'arms': 4,
   'core': 5,
+  'biceps': 6,
+  'triceps': 7,
 };
 const _CustomExerciseTemplatemuscleGroupValueEnumMap = {
   0: MuscleGroup.chest,
@@ -158,6 +160,8 @@ const _CustomExerciseTemplatemuscleGroupValueEnumMap = {
   3: MuscleGroup.shoulders,
   4: MuscleGroup.arms,
   5: MuscleGroup.core,
+  6: MuscleGroup.biceps,
+  7: MuscleGroup.triceps,
 };
 
 Id _customExerciseTemplateGetId(CustomExerciseTemplate object) {

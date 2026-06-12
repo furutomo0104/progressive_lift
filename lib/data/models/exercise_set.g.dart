@@ -22,18 +22,28 @@ const ExerciseSetSchema = CollectionSchema(
       name: r'exerciseRecordId',
       type: IsarType.long,
     ),
-    r'reps': PropertySchema(
+    r'memo': PropertySchema(
       id: 1,
+      name: r'memo',
+      type: IsarType.string,
+    ),
+    r'recordedAt': PropertySchema(
+      id: 2,
+      name: r'recordedAt',
+      type: IsarType.dateTime,
+    ),
+    r'reps': PropertySchema(
+      id: 3,
       name: r'reps',
       type: IsarType.long,
     ),
     r'setOrder': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'setOrder',
       type: IsarType.long,
     ),
     r'weightKg': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'weightKg',
       type: IsarType.double,
     )
@@ -72,6 +82,12 @@ int _exerciseSetEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.memo;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -82,9 +98,11 @@ void _exerciseSetSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.exerciseRecordId);
-  writer.writeLong(offsets[1], object.reps);
-  writer.writeLong(offsets[2], object.setOrder);
-  writer.writeDouble(offsets[3], object.weightKg);
+  writer.writeString(offsets[1], object.memo);
+  writer.writeDateTime(offsets[2], object.recordedAt);
+  writer.writeLong(offsets[3], object.reps);
+  writer.writeLong(offsets[4], object.setOrder);
+  writer.writeDouble(offsets[5], object.weightKg);
 }
 
 ExerciseSet _exerciseSetDeserialize(
@@ -96,9 +114,11 @@ ExerciseSet _exerciseSetDeserialize(
   final object = ExerciseSet();
   object.exerciseRecordId = reader.readLong(offsets[0]);
   object.id = id;
-  object.reps = reader.readLong(offsets[1]);
-  object.setOrder = reader.readLong(offsets[2]);
-  object.weightKg = reader.readDouble(offsets[3]);
+  object.memo = reader.readStringOrNull(offsets[1]);
+  object.recordedAt = reader.readDateTimeOrNull(offsets[2]);
+  object.reps = reader.readLong(offsets[3]);
+  object.setOrder = reader.readLong(offsets[4]);
+  object.weightKg = reader.readDouble(offsets[5]);
   return object;
 }
 
@@ -112,10 +132,14 @@ P _exerciseSetDeserializeProp<P>(
     case 0:
       return (reader.readLong(offset)) as P;
     case 1:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
+      return (reader.readLong(offset)) as P;
+    case 4:
+      return (reader.readLong(offset)) as P;
+    case 5:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -425,6 +449,228 @@ extension ExerciseSetQueryFilter
     });
   }
 
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'memo',
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      memoIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'memo',
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'memo',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'memo',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'memo',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'memo',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'memo',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'memo',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'memo',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'memo',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> memoIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'memo',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      memoIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'memo',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      recordedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'recordedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      recordedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'recordedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      recordedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'recordedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      recordedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'recordedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      recordedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'recordedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition>
+      recordedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'recordedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<ExerciseSet, ExerciseSet, QAfterFilterCondition> repsEqualTo(
       int value) {
     return QueryBuilder.apply(this, (query) {
@@ -620,6 +866,30 @@ extension ExerciseSetQuerySortBy
     });
   }
 
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> sortByMemo() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'memo', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> sortByMemoDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'memo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> sortByRecordedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recordedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> sortByRecordedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recordedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> sortByReps() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reps', Sort.asc);
@@ -685,6 +955,30 @@ extension ExerciseSetQuerySortThenBy
     });
   }
 
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> thenByMemo() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'memo', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> thenByMemoDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'memo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> thenByRecordedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recordedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> thenByRecordedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recordedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<ExerciseSet, ExerciseSet, QAfterSortBy> thenByReps() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reps', Sort.asc);
@@ -731,6 +1025,19 @@ extension ExerciseSetQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ExerciseSet, ExerciseSet, QDistinct> distinctByMemo(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'memo', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ExerciseSet, ExerciseSet, QDistinct> distinctByRecordedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'recordedAt');
+    });
+  }
+
   QueryBuilder<ExerciseSet, ExerciseSet, QDistinct> distinctByReps() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'reps');
@@ -761,6 +1068,18 @@ extension ExerciseSetQueryProperty
   QueryBuilder<ExerciseSet, int, QQueryOperations> exerciseRecordIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'exerciseRecordId');
+    });
+  }
+
+  QueryBuilder<ExerciseSet, String?, QQueryOperations> memoProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'memo');
+    });
+  }
+
+  QueryBuilder<ExerciseSet, DateTime?, QQueryOperations> recordedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'recordedAt');
     });
   }
 

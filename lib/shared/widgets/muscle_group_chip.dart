@@ -13,15 +13,16 @@ class MuscleGroupChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final g = group.displayGroup;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 6 : 8,
         vertical: compact ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: group.color.withValues(alpha: 0.2),
+        color: g.color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: group.color.withValues(alpha: 0.6)),
+        border: Border.all(color: g.color.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -30,16 +31,16 @@ class MuscleGroupChip extends StatelessWidget {
             width: compact ? 6 : 8,
             height: compact ? 6 : 8,
             decoration: BoxDecoration(
-              color: group.color,
+              color: g.color,
               shape: BoxShape.circle,
             ),
           ),
           SizedBox(width: compact ? 4 : 6),
           Text(
-            group.label,
+            g.label,
             style: TextStyle(
               fontSize: compact ? 10 : 12,
-              color: group.color,
+              color: g.color,
               fontWeight: FontWeight.w600,
             ),
           ),

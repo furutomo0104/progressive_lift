@@ -15,20 +15,15 @@ class CalendarScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final focusedDay = useState(DateTime.now());
     final selectedDay = useState<DateTime?>(DateTime.now());
-    final summaries = useState<Map<DateTime, DayWorkoutSummary>>({});
 
-    useEffect(() {
-      Future<void> load() async {
-        final repo = await ref.read(workoutRepositoryProvider.future);
-        final list = await repo.getMonthSummaries(focusedDay.value);
-        summaries.value = {
-          for (final s in list) WorkoutRepository.normalizeDate(s.date): s,
-        };
-      }
+    final summariesAsync = ref.watch(
+      calendarSummariesProvider(focusedDay.value),
+    );
 
-      load();
-      return null;
-    }, [focusedDay.value.month, focusedDay.value.year]);
+    final summaries = summariesAsync.maybeWhen(
+      data: (m) => m,
+      orElse: () => <DateTime, DayWorkoutSummary>{},
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -77,10 +72,10 @@ class CalendarScreen extends HookConsumerWidget {
             ),
             calendarBuilders: CalendarBuilders(
               defaultBuilder: (context, day, _) =>
-                  _buildCell(day, summaries.value),
+                  _buildCell(day, summaries),
               todayBuilder: (context, day, _) => _buildCell(
                 day,
-                summaries.value,
+                summaries,
                 border: Border.all(
                   color: Theme.of(context).colorScheme.primary,
                   width: 1.5,
@@ -88,7 +83,7 @@ class CalendarScreen extends HookConsumerWidget {
               ),
               selectedBuilder: (context, day, _) => _buildCell(
                 day,
-                summaries.value,
+                summaries,
                 fill: Theme.of(context)
                     .colorScheme
                     .primaryContainer
@@ -126,9 +121,8 @@ class CalendarScreen extends HookConsumerWidget {
     return Container(
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: fill ?? (multiPart
-            ? Colors.white.withValues(alpha: 0.04)
-            : null),
+        color: fill ??
+            (multiPart ? Colors.white.withValues(alpha: 0.04) : null),
         border: border,
         borderRadius: BorderRadius.circular(10),
       ),

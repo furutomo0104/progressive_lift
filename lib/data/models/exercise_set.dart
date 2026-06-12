@@ -13,4 +13,10 @@ class ExerciseSet {
   late double weightKg;
   late int reps;
   late int setOrder;
+
+  /// 補助・パーシャル・Failed 等のメモ
+  String? memo;
+
+  /// セットを記録した日時
+  DateTime? recordedAt;
 }
