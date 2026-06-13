@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:progressive_lift/data/models/cardio_record.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/features/workout/presentation/add_exercise_sheet.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:progressive_lift/features/workout/presentation/cardio_section.dart';
 import 'package:progressive_lift/features/workout/presentation/exercise_card.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
@@ -34,6 +36,7 @@ class WorkoutRecordPanel extends HookConsumerWidget {
             session: data.session,
             exercises: data.exercises,
             setsByExercise: data.setsByExercise,
+            cardioRecords: data.cardioRecords,
             expandedId: expandedId.value,
             onExpandedChanged: (id) => expandedId.value = id,
             onChanged: () {
@@ -55,10 +58,12 @@ class WorkoutRecordPanel extends HookConsumerWidget {
     for (final ex in exercises) {
       setsMap[ex.id] = await repo.getSetsForExercise(ex.id);
     }
+    final cardio = await repo.getCardioForSession(session.id);
     return _DayData(
       session: session,
       exercises: exercises,
       setsByExercise: setsMap,
+      cardioRecords: cardio,
     );
   }
 }
@@ -68,11 +73,13 @@ class _DayData {
     required this.session,
     required this.exercises,
     required this.setsByExercise,
+    required this.cardioRecords,
   });
 
   final dynamic session;
   final List<ExerciseRecord> exercises;
   final Map<int, List<ExerciseSet>> setsByExercise;
+  final List<CardioRecord> cardioRecords;
 }
 
 class _WorkoutRecordBody extends HookConsumerWidget {
@@ -81,6 +88,7 @@ class _WorkoutRecordBody extends HookConsumerWidget {
     required this.session,
     required this.exercises,
     required this.setsByExercise,
+    required this.cardioRecords,
     required this.expandedId,
     required this.onExpandedChanged,
     required this.onChanged,
@@ -90,6 +98,7 @@ class _WorkoutRecordBody extends HookConsumerWidget {
   final dynamic session;
   final List<ExerciseRecord> exercises;
   final Map<int, List<ExerciseSet>> setsByExercise;
+  final List<CardioRecord> cardioRecords;
   final int? expandedId;
   final ValueChanged<int?> onExpandedChanged;
   final VoidCallback onChanged;
@@ -152,71 +161,62 @@ class _WorkoutRecordBody extends HookConsumerWidget {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: exercises.isEmpty
-              ? _EmptyState(onAdd: openAddExercise)
-              : SlidableAutoCloseBehavior(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    itemCount: exercises.length,
-                    itemBuilder: (_, i) {
-                      final ex = exercises[i];
-                      return ExerciseCard(
-                        key: ValueKey('exercise-card-${ex.id}'),
-                        exercise: ex,
-                        sets: setsByExercise[ex.id] ?? [],
-                        expanded: expandedId == ex.id,
-                        onToggle: () => onExpandedChanged(
-                          expandedId == ex.id ? null : ex.id,
+          child: SlidableAutoCloseBehavior(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              children: [
+                if (exercises.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.fitness_center,
+                          size: 40,
+                          color: Colors.white.withValues(alpha: 0.15),
                         ),
-                        onChanged: () {
-                          if (!exercises.any((e) => e.id == expandedId)) {
-                            onExpandedChanged(null);
-                          }
-                          onChanged();
-                        },
-                      );
-                    },
+                        const SizedBox(height: 12),
+                        const Text(
+                          '種目を追加してセットを記録',
+                          style: TextStyle(color: Colors.white54, fontSize: 14),
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: openAddExercise,
+                          icon: const Icon(Icons.add),
+                          label: const Text('最初の種目を追加'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...exercises.map(
+                    (ex) => ExerciseCard(
+                      key: ValueKey('exercise-card-${ex.id}'),
+                      exercise: ex,
+                      sets: setsByExercise[ex.id] ?? [],
+                      expanded: expandedId == ex.id,
+                      onToggle: () => onExpandedChanged(
+                        expandedId == ex.id ? null : ex.id,
+                      ),
+                      onChanged: () {
+                        if (!exercises.any((e) => e.id == expandedId)) {
+                          onExpandedChanged(null);
+                        }
+                        onChanged();
+                      },
+                    ),
                   ),
+                CardioSection(
+                  sessionId: session.id as int,
+                  records: cardioRecords,
+                  onChanged: onChanged,
                 ),
+              ],
+            ),
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onAdd});
-
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.fitness_center,
-              size: 48,
-              color: Colors.white.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '種目を追加して\nセットを記録しましょう',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 15),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('最初の種目を追加'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

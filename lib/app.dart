@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/core/theme/app_theme.dart';
-import 'package:progressive_lift/features/calendar/presentation/calendar_screen.dart';
+import 'package:progressive_lift/features/shell/presentation/main_shell.dart';
 
 class ProgressiveLiftApp extends StatelessWidget {
   const ProgressiveLiftApp({super.key});
@@ -13,7 +13,7 @@ class ProgressiveLiftApp extends StatelessWidget {
         title: 'Progressive Lift',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
-        home: const CalendarScreen(),
+        home: const MainShell(),
       ),
     );
   }

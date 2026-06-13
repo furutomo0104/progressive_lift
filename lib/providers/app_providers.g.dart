@@ -645,6 +645,292 @@ class _CalendarSummariesProviderElement
   DateTime get monthAnchor => (origin as CalendarSummariesProvider).monthAnchor;
 }
 
+String _$monthWorkoutAnalysisHash() =>
+    r'83eefc219fa18172c08e7f008bf698b148ecda0c';
+
+/// See also [monthWorkoutAnalysis].
+@ProviderFor(monthWorkoutAnalysis)
+const monthWorkoutAnalysisProvider = MonthWorkoutAnalysisFamily();
+
+/// See also [monthWorkoutAnalysis].
+class MonthWorkoutAnalysisFamily
+    extends Family<AsyncValue<MonthWorkoutAnalysis>> {
+  /// See also [monthWorkoutAnalysis].
+  const MonthWorkoutAnalysisFamily();
+
+  /// See also [monthWorkoutAnalysis].
+  MonthWorkoutAnalysisProvider call(
+    DateTime monthAnchor,
+  ) {
+    return MonthWorkoutAnalysisProvider(
+      monthAnchor,
+    );
+  }
+
+  @override
+  MonthWorkoutAnalysisProvider getProviderOverride(
+    covariant MonthWorkoutAnalysisProvider provider,
+  ) {
+    return call(
+      provider.monthAnchor,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'monthWorkoutAnalysisProvider';
+}
+
+/// See also [monthWorkoutAnalysis].
+class MonthWorkoutAnalysisProvider
+    extends AutoDisposeFutureProvider<MonthWorkoutAnalysis> {
+  /// See also [monthWorkoutAnalysis].
+  MonthWorkoutAnalysisProvider(
+    DateTime monthAnchor,
+  ) : this._internal(
+          (ref) => monthWorkoutAnalysis(
+            ref as MonthWorkoutAnalysisRef,
+            monthAnchor,
+          ),
+          from: monthWorkoutAnalysisProvider,
+          name: r'monthWorkoutAnalysisProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$monthWorkoutAnalysisHash,
+          dependencies: MonthWorkoutAnalysisFamily._dependencies,
+          allTransitiveDependencies:
+              MonthWorkoutAnalysisFamily._allTransitiveDependencies,
+          monthAnchor: monthAnchor,
+        );
+
+  MonthWorkoutAnalysisProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.monthAnchor,
+  }) : super.internal();
+
+  final DateTime monthAnchor;
+
+  @override
+  Override overrideWith(
+    FutureOr<MonthWorkoutAnalysis> Function(MonthWorkoutAnalysisRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: MonthWorkoutAnalysisProvider._internal(
+        (ref) => create(ref as MonthWorkoutAnalysisRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        monthAnchor: monthAnchor,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<MonthWorkoutAnalysis> createElement() {
+    return _MonthWorkoutAnalysisProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MonthWorkoutAnalysisProvider &&
+        other.monthAnchor == monthAnchor;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, monthAnchor.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin MonthWorkoutAnalysisRef
+    on AutoDisposeFutureProviderRef<MonthWorkoutAnalysis> {
+  /// The parameter `monthAnchor` of this provider.
+  DateTime get monthAnchor;
+}
+
+class _MonthWorkoutAnalysisProviderElement
+    extends AutoDisposeFutureProviderElement<MonthWorkoutAnalysis>
+    with MonthWorkoutAnalysisRef {
+  _MonthWorkoutAnalysisProviderElement(super.provider);
+
+  @override
+  DateTime get monthAnchor =>
+      (origin as MonthWorkoutAnalysisProvider).monthAnchor;
+}
+
+String _$exerciseListItemsHash() => r'3064b342c06b813626155d2a21a2bea1919b544a';
+
+/// See also [exerciseListItems].
+@ProviderFor(exerciseListItems)
+final exerciseListItemsProvider =
+    AutoDisposeFutureProvider<List<ExerciseListItem>>.internal(
+  exerciseListItems,
+  name: r'exerciseListItemsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$exerciseListItemsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef ExerciseListItemsRef
+    = AutoDisposeFutureProviderRef<List<ExerciseListItem>>;
+String _$exerciseHistoryHash() => r'50ea16209bf5fb3bd2579b8e6ed388b9c689ef2c';
+
+/// See also [exerciseHistory].
+@ProviderFor(exerciseHistory)
+const exerciseHistoryProvider = ExerciseHistoryFamily();
+
+/// See also [exerciseHistory].
+class ExerciseHistoryFamily
+    extends Family<AsyncValue<List<ExerciseHistoryEntry>>> {
+  /// See also [exerciseHistory].
+  const ExerciseHistoryFamily();
+
+  /// See also [exerciseHistory].
+  ExerciseHistoryProvider call(
+    String exerciseKey,
+  ) {
+    return ExerciseHistoryProvider(
+      exerciseKey,
+    );
+  }
+
+  @override
+  ExerciseHistoryProvider getProviderOverride(
+    covariant ExerciseHistoryProvider provider,
+  ) {
+    return call(
+      provider.exerciseKey,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'exerciseHistoryProvider';
+}
+
+/// See also [exerciseHistory].
+class ExerciseHistoryProvider
+    extends AutoDisposeFutureProvider<List<ExerciseHistoryEntry>> {
+  /// See also [exerciseHistory].
+  ExerciseHistoryProvider(
+    String exerciseKey,
+  ) : this._internal(
+          (ref) => exerciseHistory(
+            ref as ExerciseHistoryRef,
+            exerciseKey,
+          ),
+          from: exerciseHistoryProvider,
+          name: r'exerciseHistoryProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$exerciseHistoryHash,
+          dependencies: ExerciseHistoryFamily._dependencies,
+          allTransitiveDependencies:
+              ExerciseHistoryFamily._allTransitiveDependencies,
+          exerciseKey: exerciseKey,
+        );
+
+  ExerciseHistoryProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.exerciseKey,
+  }) : super.internal();
+
+  final String exerciseKey;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<ExerciseHistoryEntry>> Function(ExerciseHistoryRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ExerciseHistoryProvider._internal(
+        (ref) => create(ref as ExerciseHistoryRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        exerciseKey: exerciseKey,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<ExerciseHistoryEntry>> createElement() {
+    return _ExerciseHistoryProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExerciseHistoryProvider && other.exerciseKey == exerciseKey;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, exerciseKey.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin ExerciseHistoryRef
+    on AutoDisposeFutureProviderRef<List<ExerciseHistoryEntry>> {
+  /// The parameter `exerciseKey` of this provider.
+  String get exerciseKey;
+}
+
+class _ExerciseHistoryProviderElement
+    extends AutoDisposeFutureProviderElement<List<ExerciseHistoryEntry>>
+    with ExerciseHistoryRef {
+  _ExerciseHistoryProviderElement(super.provider);
+
+  @override
+  String get exerciseKey => (origin as ExerciseHistoryProvider).exerciseKey;
+}
+
 String _$premiumToggleHash() => r'9ca71e85f74a82787014eadfaa87a718e2df0265';
 
 /// See also [PremiumToggle].

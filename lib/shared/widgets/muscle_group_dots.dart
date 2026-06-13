@@ -8,11 +8,13 @@ class MuscleGroupDots extends StatelessWidget {
     required this.groups,
     this.dotSize = 7,
     this.maxVisible = 4,
+    this.showBadge = true,
   });
 
   final Set<MuscleGroup> groups;
   final double dotSize;
   final int maxVisible;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +26,11 @@ class MuscleGroupDots extends StatelessWidget {
         MuscleGroup.selectable.where((g) => groups.contains(g)).toList();
     final visible = sorted.take(maxVisible).toList();
     final overflow = sorted.length - visible.length;
-    final multiPart = sorted.length >= 2;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (multiPart)
+        if (showBadge && sorted.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(bottom: 2),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),

@@ -330,6 +330,7 @@ class _MuscleGroupAccordion extends StatelessWidget {
                         style: TextStyle(fontSize: 11, color: Colors.white38),
                       )
                     : null,
+                onTap: () => onPick(e),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

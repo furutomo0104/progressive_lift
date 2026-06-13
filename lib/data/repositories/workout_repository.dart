@@ -1,20 +1,29 @@
 import 'package:isar/isar.dart';
+import 'package:progressive_lift/core/enums/cardio_type.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/core/constants/exercise_catalog.dart';
+import 'package:progressive_lift/data/models/cardio_record.dart';
 import 'package:progressive_lift/data/models/custom_exercise_template.dart';
 import 'package:progressive_lift/data/models/exercise_preference.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/data/models/workout_session.dart';
+import 'package:progressive_lift/domain/models/exercise_list_item.dart';
+import 'package:progressive_lift/domain/models/month_workout_analysis.dart';
 import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 
 class DayWorkoutSummary {
-  DayWorkoutSummary({required this.date, required this.muscleGroups});
+  DayWorkoutSummary({
+    required this.date,
+    required this.muscleGroups,
+    this.hasCardio = false,
+  });
 
   final DateTime date;
   final Set<MuscleGroup> muscleGroups;
+  final bool hasCardio;
 }
 
 class ExerciseHistoryEntry {
@@ -37,6 +46,184 @@ class WorkoutRepository {
   static DateTime normalizeDate(DateTime d) =>
       DateTime(d.year, d.month, d.day);
 
+  Future<MonthWorkoutAnalysis> getMonthAnalysis(DateTime month) async {
+    final anchor = DateTime(month.year, month.month, 1);
+    final basic = await _computeMonthBasicStats(anchor);
+    final prevAnchor = DateTime(anchor.year, anchor.month - 1, 1);
+    final prevBasic = await _computeMonthBasicStats(prevAnchor);
+
+    final exerciseKeys = await _exerciseKeysInMonth(anchor);
+    final improvements = <MonthProgressHighlight>[];
+    final improvedKeys = <String>{};
+
+    for (final key in exerciseKeys) {
+      final series = await getTopSetSeries(key);
+      if (series.length < 2) continue;
+
+      MonthProgressHighlight? bestInMonth;
+      for (var i = 0; i < series.length; i++) {
+        final point = series[i];
+        if (!_isInMonth(point.date, anchor)) continue;
+
+        final previous = _previousTopSet(series, i);
+        if (previous == null) continue;
+        if (!_isImprovement(previous, point)) continue;
+
+        improvedKeys.add(key);
+        final name = await resolveExerciseName(key);
+        final highlight = MonthProgressHighlight(
+          exerciseKey: key,
+          exerciseName: name,
+          previousWeightKg: previous.weightKg,
+          previousReps: previous.reps,
+          newWeightKg: point.weightKg,
+          newReps: point.reps,
+        );
+
+        if (bestInMonth == null ||
+            _compareHighlights(highlight, bestInMonth) > 0) {
+          bestInMonth = highlight;
+        }
+      }
+
+      if (bestInMonth != null) improvements.add(bestInMonth);
+    }
+
+    improvements.sort(_compareHighlights);
+    final topHighlights = improvements.take(3).toList();
+    final cardioStats = await _computeMonthCardioStats(anchor);
+
+    return MonthWorkoutAnalysis(
+      month: anchor,
+      trainingDays: basic.trainingDays,
+      totalSets: basic.totalSets,
+      prExerciseCount: improvedKeys.length,
+      muscleGroupDayCounts: basic.muscleGroupDayCounts,
+      highlights: topHighlights,
+      previousMonthTrainingDays: prevBasic.trainingDays,
+      previousMonthTotalSets: prevBasic.totalSets,
+      cardioCount: cardioStats.count,
+      cardioTotalMinutes: cardioStats.totalMinutes,
+    );
+  }
+
+  Future<({int count, int totalMinutes})> _computeMonthCardioStats(
+    DateTime monthStart,
+  ) async {
+    final start = monthStart;
+    final end = DateTime(monthStart.year, monthStart.month + 1, 0, 23, 59, 59);
+    final sessions = await _isar.workoutSessions
+        .where()
+        .dateBetween(start, end)
+        .findAll();
+
+    var count = 0;
+    var totalMinutes = 0;
+    for (final session in sessions) {
+      final records = await getCardioForSession(session.id);
+      if (records.isEmpty) continue;
+      count += records.length;
+      for (final r in records) {
+        totalMinutes += r.durationMinutes;
+      }
+    }
+    return (count: count, totalMinutes: totalMinutes);
+  }
+
+  bool _isInMonth(DateTime date, DateTime monthStart) {
+    return date.year == monthStart.year && date.month == monthStart.month;
+  }
+
+  TopSetPoint? _previousTopSet(List<TopSetPoint> series, int index) {
+    if (index <= 0) return null;
+    return series[index - 1];
+  }
+
+  bool _isImprovement(TopSetPoint previous, TopSetPoint current) {
+    if (current.weightKg > previous.weightKg) return true;
+    if (current.weightKg == previous.weightKg && current.reps > previous.reps) {
+      return true;
+    }
+    return false;
+  }
+
+  int _compareHighlights(MonthProgressHighlight a, MonthProgressHighlight b) {
+    final weightCmp = a.weightDelta.compareTo(b.weightDelta);
+    if (weightCmp != 0) return weightCmp;
+    return a.repDelta.compareTo(b.repDelta);
+  }
+
+  Future<Set<String>> _exerciseKeysInMonth(DateTime monthStart) async {
+    final start = monthStart;
+    final end = DateTime(monthStart.year, monthStart.month + 1, 0, 23, 59, 59);
+    final sessions = await _isar.workoutSessions
+        .where()
+        .dateBetween(start, end)
+        .findAll();
+    final keys = <String>{};
+    for (final session in sessions) {
+      final records = await _isar.exerciseRecords
+          .where()
+          .sessionIdEqualTo(session.id)
+          .findAll();
+      for (final record in records) {
+        keys.add(record.exerciseKey);
+      }
+    }
+    return keys;
+  }
+
+  Future<
+      ({
+        int trainingDays,
+        int totalSets,
+        Map<MuscleGroup, int> muscleGroupDayCounts,
+      })> _computeMonthBasicStats(DateTime monthStart) async {
+    final start = monthStart;
+    final end = DateTime(monthStart.year, monthStart.month + 1, 0, 23, 59, 59);
+    final sessions = await _isar.workoutSessions
+        .where()
+        .dateBetween(start, end)
+        .findAll();
+
+    var totalSets = 0;
+    var trainingDays = 0;
+    final muscleGroupDayCounts = <MuscleGroup, int>{};
+
+    for (final session in sessions) {
+      final records = await _isar.exerciseRecords
+          .where()
+          .sessionIdEqualTo(session.id)
+          .findAll();
+
+      var sessionSets = 0;
+      final groupsThisDay = <MuscleGroup>{};
+
+      for (final record in records) {
+        final sets = await getSetsForExercise(record.id);
+        if (sets.isEmpty) continue;
+        sessionSets += sets.length;
+        groupsThisDay.add(record.muscleGroup.displayGroup);
+      }
+
+      if (sessionSets == 0) continue;
+
+      trainingDays++;
+      totalSets += sessionSets;
+
+      for (final group in groupsThisDay) {
+        if (group.isLegacy) continue;
+        muscleGroupDayCounts[group] = (muscleGroupDayCounts[group] ?? 0) + 1;
+      }
+    }
+
+    return (
+      trainingDays: trainingDays,
+      totalSets: totalSets,
+      muscleGroupDayCounts: muscleGroupDayCounts,
+    );
+  }
+
   Future<List<DayWorkoutSummary>> getMonthSummaries(DateTime month) {
     final start = DateTime(month.year, month.month, 1);
     final end = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
@@ -56,10 +243,12 @@ class WorkoutRepository {
             .map((r) => r.muscleGroup.displayGroup)
             .where((g) => !g.isLegacy)
             .toSet();
+        final cardio = await getCardioForSession(session.id);
         summaries.add(
           DayWorkoutSummary(
             date: normalizeDate(session.date),
             muscleGroups: groups,
+            hasCardio: cardio.isNotEmpty,
           ),
         );
       }
@@ -366,5 +555,92 @@ class WorkoutRepository {
         .exerciseKeyEqualTo(exerciseKey)
         .findFirst();
     return record?.name ?? exerciseKey;
+  }
+
+  // ── 有酸素 ──
+
+  Future<List<CardioRecord>> getCardioForSession(int sessionId) {
+    return _isar.cardioRecords
+        .where()
+        .sessionIdEqualTo(sessionId)
+        .findAll();
+  }
+
+  Future<CardioRecord> addCardio({
+    required int sessionId,
+    required CardioType type,
+    required int durationMinutes,
+    String? memo,
+  }) async {
+    final record = CardioRecord()
+      ..sessionId = sessionId
+      ..type = type
+      ..durationMinutes = durationMinutes
+      ..memo = memo?.trim().isEmpty == true ? null : memo?.trim();
+    await _isar.writeTxn(() => _isar.cardioRecords.put(record));
+    return record;
+  }
+
+  Future<void> updateCardio({
+    required int id,
+    required CardioType type,
+    required int durationMinutes,
+    String? memo,
+  }) async {
+    final record = await _isar.cardioRecords.get(id);
+    if (record == null) return;
+    record.type = type;
+    record.durationMinutes = durationMinutes;
+    record.memo = memo?.trim().isEmpty == true ? null : memo?.trim();
+    await _isar.writeTxn(() => _isar.cardioRecords.put(record));
+  }
+
+  Future<void> deleteCardio(int id) async {
+    await _isar.writeTxn(() => _isar.cardioRecords.delete(id));
+  }
+
+  // ── 種目一覧（分析タブ用） ──
+
+  Future<List<ExerciseListItem>> getExerciseListItems() async {
+    final records = await _isar.exerciseRecords.where().findAll();
+    final keys = records.map((r) => r.exerciseKey).toSet();
+    final items = <ExerciseListItem>[];
+
+    for (final key in keys) {
+      final keyRecords =
+          records.where((r) => r.exerciseKey == key).toList();
+      ExerciseRecord? latestRecord;
+      DateTime? lastDate;
+
+      for (final record in keyRecords) {
+        final session = await _isar.workoutSessions.get(record.sessionId);
+        if (session == null) continue;
+        final day = normalizeDate(session.date);
+        if (lastDate == null || day.isAfter(lastDate)) {
+          lastDate = day;
+          latestRecord = record;
+        }
+      }
+
+      final series = await getTopSetSeries(key);
+      final name = await resolveExerciseName(key);
+
+      items.add(
+        ExerciseListItem(
+          exerciseKey: key,
+          name: name,
+          muscleGroup: latestRecord?.muscleGroup.displayGroup ??
+              MuscleGroup.chest,
+          latestTop: series.isNotEmpty ? series.last : null,
+          lastTrainedDate: lastDate,
+        ),
+      );
+    }
+
+    items.sort(
+      (a, b) => (b.lastTrainedDate ?? DateTime(1970))
+          .compareTo(a.lastTrainedDate ?? DateTime(1970)),
+    );
+    return items;
   }
 }

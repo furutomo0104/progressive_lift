@@ -283,16 +283,18 @@ class _SetRow extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final weightCtrl = useTextEditingController(text: '${set.weightKg}');
-    final repsCtrl = useTextEditingController(text: '${set.reps}');
-    final memoCtrl = useTextEditingController(text: set.memo ?? '');
+    final weightCtrl = useTextEditingController();
+    final repsCtrl = useTextEditingController();
+    final memoCtrl = useTextEditingController();
 
     useEffect(() {
-      weightCtrl.text = '${set.weightKg}';
-      repsCtrl.text = '${set.reps}';
-      memoCtrl.text = set.memo ?? '';
+      if (editing) {
+        weightCtrl.text = _formatWeight(set.weightKg);
+        repsCtrl.text = '${set.reps}';
+        memoCtrl.text = set.memo ?? '';
+      }
       return null;
-    }, [set.id, set.weightKg, set.reps, set.memo]);
+    }, [editing, set.id]);
 
     Future<void> save() async {
       final w = double.tryParse(weightCtrl.text);
@@ -456,4 +458,8 @@ class _SetRow extends HookConsumerWidget {
       ),
     );
   }
+}
+
+String _formatWeight(double w) {
+  return w % 1 == 0 ? w.toStringAsFixed(0) : w.toStringAsFixed(1);
 }

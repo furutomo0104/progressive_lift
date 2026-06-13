@@ -14,15 +14,15 @@ enum MuscleGroup {
   final String label;
   final Color color;
 
-  /// UIで選択・表示する部位
+  /// UIで選択・表示する部位（体幹は最後）
   static const selectable = [
     MuscleGroup.chest,
     MuscleGroup.back,
     MuscleGroup.legs,
     MuscleGroup.shoulders,
-    MuscleGroup.core,
     MuscleGroup.biceps,
     MuscleGroup.triceps,
+    MuscleGroup.core,
   ];
 
   bool get isLegacy => this == MuscleGroup.arms;

@@ -4,8 +4,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
 import 'package:progressive_lift/features/calendar/presentation/day_workout_sheet.dart';
+import 'package:progressive_lift/features/calendar/presentation/widgets/month_summary_panel.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
-import 'package:progressive_lift/shared/widgets/muscle_group_dots.dart';
+import 'package:progressive_lift/shared/widgets/calendar_day_cell.dart';
 import 'package:progressive_lift/shared/widgets/muscle_group_legend.dart';
 
 class CalendarScreen extends HookConsumerWidget {
@@ -51,6 +52,7 @@ class CalendarScreen extends HookConsumerWidget {
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: focusedDay.value,
+            rowHeight: 58,
             selectedDayPredicate: (day) => isSameDay(selectedDay.value, day),
             calendarFormat: CalendarFormat.month,
             startingDayOfWeek: StartingDayOfWeek.monday,
@@ -65,6 +67,7 @@ class CalendarScreen extends HookConsumerWidget {
               weekendTextStyle: const TextStyle(color: Colors.white70),
               cellMargin: const EdgeInsets.all(3),
               defaultTextStyle: const TextStyle(fontSize: 13),
+              cellPadding: EdgeInsets.zero,
             ),
             headerStyle: const HeaderStyle(
               formatButtonVisible: false,
@@ -91,15 +94,9 @@ class CalendarScreen extends HookConsumerWidget {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              '日付をタップして記録。2部位以上の日は「N部位」と表示されます。',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.45),
-                fontSize: 12,
-              ),
-              textAlign: TextAlign.center,
+          Expanded(
+            child: SingleChildScrollView(
+              child: MonthSummaryPanel(monthAnchor: focusedDay.value),
             ),
           ),
         ],
@@ -116,30 +113,13 @@ class CalendarScreen extends HookConsumerWidget {
     final key = WorkoutRepository.normalizeDate(day);
     final summary = summaries[key];
     final groups = summary?.muscleGroups ?? {};
-    final multiPart = groups.length >= 2;
 
-    return Container(
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: fill ??
-            (multiPart ? Colors.white.withValues(alpha: 0.04) : null),
-        border: border,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${day.day}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: multiPart ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-          const SizedBox(height: 2),
-          MuscleGroupDots(groups: groups, dotSize: 7),
-        ],
-      ),
+    return CalendarDayCell(
+      day: day.day,
+      groups: groups,
+      hasCardio: summary?.hasCardio ?? false,
+      border: border,
+      fill: fill,
     );
   }
 }

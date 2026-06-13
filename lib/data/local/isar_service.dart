@@ -5,6 +5,7 @@ import 'package:progressive_lift/data/models/exercise_preference.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/data/local/data_migration.dart';
+import 'package:progressive_lift/data/models/cardio_record.dart';
 import 'package:progressive_lift/data/models/workout_session.dart';
 
 class IsarService {
@@ -20,6 +21,7 @@ class IsarService {
         ExerciseSetSchema,
         CustomExerciseTemplateSchema,
         ExercisePreferenceSchema,
+        CardioRecordSchema,
       ],
       directory: dir.path,
     );

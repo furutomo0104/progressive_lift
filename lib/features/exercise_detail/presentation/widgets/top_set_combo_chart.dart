@@ -6,18 +6,19 @@ import 'package:progressive_lift/domain/models/top_set_point.dart';
 /// Case 1: トップセット特化型複合グラフ
 /// - 左Y軸: 最高重量（折れ線）
 /// - 右Y軸: Reps（棒）
-/// - 点線: 直前トップセットの重量（Target）
 class TopSetComboChart extends StatelessWidget {
   const TopSetComboChart({
     super.key,
     required this.points,
-    this.target,
     this.height = 260,
   });
 
   final List<TopSetPoint> points;
-  final WorkoutTarget? target;
   final double height;
+
+  static const _leftAxisReserved = 40.0;
+  static const _rightAxisReserved = 36.0;
+  static const _bottomAxisReserved = 28.0;
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +33,13 @@ class TopSetComboChart extends StatelessWidget {
     final weights = points.map((p) => p.weightKg).toList();
     final reps = points.map((p) => p.reps.toDouble()).toList();
 
-    var minW = weights.reduce((a, b) => a < b ? a : b);
-    var maxW = weights.reduce((a, b) => a > b ? a : b);
-    var minR = reps.reduce((a, b) => a < b ? a : b);
-    var maxR = reps.reduce((a, b) => a > b ? a : b);
-
-    if (target != null) {
-      minW = [minW, target!.baselineWeightKg, target!.suggestedWeightKg]
-          .reduce((a, b) => a < b ? a : b);
-      maxW = [maxW, target!.baselineWeightKg, target!.suggestedWeightKg]
-          .reduce((a, b) => a > b ? a : b);
-    }
+    final minW = weights.reduce((a, b) => a < b ? a : b);
+    final maxW = weights.reduce((a, b) => a > b ? a : b);
+    final minR = reps.reduce((a, b) => a < b ? a : b);
+    final maxR = reps.reduce((a, b) => a > b ? a : b);
 
     final weightPad = ((maxW - minW) * 0.15).clamp(2.5, 10.0);
-    final repsPad = 1.0;
+    const repsPad = 1.0;
     final minWeightAxis = (minW - weightPad).floorToDouble();
     final maxWeightAxis = (maxW + weightPad).ceilToDouble();
     final minRepsAxis = (minR - repsPad).clamp(0, 20).floorToDouble();
@@ -80,122 +74,64 @@ class TopSetComboChart extends StatelessWidget {
       );
     }
 
-    final targetY = target != null ? mapWeight(target!.baselineWeightKg) : null;
+    final maxX = (points.length - 1).toDouble();
+    final sharedTitles = _sharedTitlesData(
+      points: points,
+      dateFmt: dateFmt,
+      minWeightAxis: minWeightAxis,
+      maxWeightAxis: maxWeightAxis,
+      minRepsAxis: minRepsAxis,
+      maxRepsAxis: maxRepsAxis,
+      showBottom: true,
+    );
+    final lineTitles = FlTitlesData(
+      show: true,
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: false,
+          reservedSize: _rightAxisReserved,
+        ),
+      ),
+      leftTitles: const AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: false,
+          reservedSize: _leftAxisReserved,
+        ),
+      ),
+      bottomTitles: const AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: false,
+          reservedSize: _bottomAxisReserved,
+        ),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (target != null) ...[
-          Row(
-            children: [
-              Container(
-                width: 24,
-                height: 0,
-                decoration: const BoxDecoration(
-                  border: Border(
-                    top: BorderSide(color: Color(0xFFFFB74D), width: 2),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  target!.displayText,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: const Color(0xFFFFB74D),
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Target: ${target!.baselineWeightKg}kg × ${target!.baselineReps}reps',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white54,
-                ),
-          ),
-          const SizedBox(height: 12),
-        ],
         SizedBox(
           height: height,
           child: Stack(
             children: [
-              // 棒グラフ（Reps → 左軸スケールに正規化）
               BarChart(
                 BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
+                  alignment: BarChartAlignment.center,
                   maxY: maxWeightAxis,
                   minY: minWeightAxis,
-                  groupsSpace: 8,
+                  groupsSpace: 12,
                   barGroups: barGroups,
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
-                  titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 36,
-                        getTitlesWidget: (value, meta) {
-                          final rangeW = maxWeightAxis - minWeightAxis;
-                          final rangeR = maxRepsAxis - minRepsAxis;
-                          if (rangeR == 0 || rangeW == 0) return const SizedBox.shrink();
-                          final repValue = minRepsAxis +
-                              (value - minWeightAxis) / rangeW * rangeR;
-                          if ((repValue - repValue.round()).abs() > 0.15) {
-                            return const SizedBox.shrink();
-                          }
-                          return Text(
-                            repValue.round().toString(),
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF4FC3F7)),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (value, meta) {
-                          if ((value - value.roundToDouble()).abs() > 0.01 &&
-                              (value * 2 - (value * 2).round()).abs() > 0.01) {
-                            return const SizedBox.shrink();
-                          }
-                          return Text(
-                            value.toStringAsFixed(value % 1 == 0 ? 0 : 1),
-                            style: const TextStyle(fontSize: 10, color: Colors.white70),
-                          );
-                        },
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          final i = value.round();
-                          if (i < 0 || i >= points.length) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              dateFmt.format(points[i].date),
-                              style: const TextStyle(fontSize: 10, color: Colors.white54),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
+                  titlesData: sharedTitles,
                 ),
               ),
-              // 折れ線 + ターゲット点線
               LineChart(
                 LineChartData(
                   minY: minWeightAxis,
                   maxY: maxWeightAxis,
-                  minX: -0.5,
-                  maxX: (points.length - 1).toDouble() + 0.5,
+                  minX: 0,
+                  maxX: maxX,
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
@@ -206,28 +142,7 @@ class TopSetComboChart extends StatelessWidget {
                     ),
                   ),
                   borderData: FlBorderData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  extraLinesData: targetY != null
-                      ? ExtraLinesData(
-                          horizontalLines: [
-                            HorizontalLine(
-                              y: targetY,
-                              color: const Color(0xFFFFB74D),
-                              strokeWidth: 2,
-                              dashArray: [6, 4],
-                              label: HorizontalLineLabel(
-                                show: true,
-                                alignment: Alignment.topRight,
-                                style: const TextStyle(
-                                  color: Color(0xFFFFB74D),
-                                  fontSize: 10,
-                                ),
-                                labelResolver: (_) => 'Target',
-                              ),
-                            ),
-                          ],
-                        )
-                      : null,
+                  titlesData: lineTitles,
                   lineBarsData: [
                     LineChartBarData(
                       spots: lineSpots,
@@ -236,7 +151,8 @@ class TopSetComboChart extends StatelessWidget {
                       barWidth: 3,
                       dotData: FlDotData(
                         show: true,
-                        getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                        getDotPainter: (spot, percent, bar, index) =>
+                            FlDotCirclePainter(
                           radius: 4,
                           color: const Color(0xFF7986CB),
                           strokeWidth: 2,
@@ -271,12 +187,83 @@ class TopSetComboChart extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _LegendDot(color: const Color(0xFF7986CB), label: 'Max Weight (kg)'),
+            _LegendDot(
+              color: const Color(0xFF7986CB),
+              label: 'Max Weight (kg)',
+            ),
             const SizedBox(width: 16),
             _LegendDot(color: const Color(0xFF4FC3F7), label: 'Reps'),
           ],
         ),
       ],
+    );
+  }
+
+  static FlTitlesData _sharedTitlesData({
+    required List<TopSetPoint> points,
+    required DateFormat dateFmt,
+    required double minWeightAxis,
+    required double maxWeightAxis,
+    required double minRepsAxis,
+    required double maxRepsAxis,
+    required bool showBottom,
+  }) {
+    return FlTitlesData(
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: _rightAxisReserved,
+          getTitlesWidget: (value, meta) {
+            final rangeW = maxWeightAxis - minWeightAxis;
+            final rangeR = maxRepsAxis - minRepsAxis;
+            if (rangeR == 0 || rangeW == 0) return const SizedBox.shrink();
+            final repValue =
+                minRepsAxis + (value - minWeightAxis) / rangeW * rangeR;
+            if ((repValue - repValue.round()).abs() > 0.15) {
+              return const SizedBox.shrink();
+            }
+            return Text(
+              repValue.round().toString(),
+              style: const TextStyle(fontSize: 10, color: Color(0xFF4FC3F7)),
+            );
+          },
+        ),
+      ),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: _leftAxisReserved,
+          getTitlesWidget: (value, meta) {
+            if ((value - value.roundToDouble()).abs() > 0.01 &&
+                (value * 2 - (value * 2).round()).abs() > 0.01) {
+              return const SizedBox.shrink();
+            }
+            return Text(
+              value.toStringAsFixed(value % 1 == 0 ? 0 : 1),
+              style: const TextStyle(fontSize: 10, color: Colors.white70),
+            );
+          },
+        ),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: showBottom,
+          reservedSize: _bottomAxisReserved,
+          getTitlesWidget: (value, meta) {
+            if (!showBottom) return const SizedBox.shrink();
+            final i = value.round();
+            if (i < 0 || i >= points.length) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                dateFmt.format(points[i].date),
+                style: const TextStyle(fontSize: 10, color: Colors.white54),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -298,7 +285,10 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.white60)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.white60),
+        ),
       ],
     );
   }

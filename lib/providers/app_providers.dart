@@ -4,6 +4,8 @@ import 'package:progressive_lift/data/models/custom_exercise_template.dart';
 import 'package:progressive_lift/data/local/isar_service.dart';
 import 'package:progressive_lift/data/local/seed_data.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
+import 'package:progressive_lift/domain/models/exercise_list_item.dart';
+import 'package:progressive_lift/domain/models/month_workout_analysis.dart';
 import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/ai_suggest_service.dart';
@@ -115,4 +117,32 @@ Future<Map<DateTime, DayWorkoutSummary>> calendarSummaries(
   return {
     for (final s in list) WorkoutRepository.normalizeDate(s.date): s,
   };
+}
+
+@riverpod
+Future<MonthWorkoutAnalysis> monthWorkoutAnalysis(
+  MonthWorkoutAnalysisRef ref,
+  DateTime monthAnchor,
+) async {
+  ref.watch(calendarRefreshTickProvider);
+  final repo = await ref.watch(workoutRepositoryProvider.future);
+  return repo.getMonthAnalysis(monthAnchor);
+}
+
+@riverpod
+Future<List<ExerciseListItem>> exerciseListItems(ExerciseListItemsRef ref) async {
+  ref.watch(calendarRefreshTickProvider);
+  ref.watch(exerciseCatalogTickProvider);
+  final repo = await ref.watch(workoutRepositoryProvider.future);
+  return repo.getExerciseListItems();
+}
+
+@riverpod
+Future<List<ExerciseHistoryEntry>> exerciseHistory(
+  ExerciseHistoryRef ref,
+  String exerciseKey,
+) async {
+  ref.watch(calendarRefreshTickProvider);
+  final repo = await ref.watch(workoutRepositoryProvider.future);
+  return repo.getExerciseHistory(exerciseKey);
 }

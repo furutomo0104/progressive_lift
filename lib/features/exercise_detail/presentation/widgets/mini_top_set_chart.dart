@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/exercise_detail_screen.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/top_set_combo_chart.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
@@ -37,25 +36,30 @@ class MiniTopSetChart extends ConsumerWidget {
           );
         }
 
-        final previous = points.length >= 2 ? points[points.length - 2] : null;
-        final target = TopSetExtractor.buildTarget(previous);
-        final latest = points.last;
+        final previous =
+            points.length >= 2 ? points[points.length - 2] : null;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                const Icon(Icons.trending_up, size: 18, color: Color(0xFF7986CB)),
+                const Icon(Icons.history, size: 18, color: Color(0xFFFFB74D)),
                 const SizedBox(width: 6),
-                Text(
-                  'TOP ${latest.weightKg}kg × ${latest.reps}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                Expanded(
+                  child: Text(
+                    previous != null
+                        ? '前回TOP ${previous.weightKg}kg × ${previous.reps}'
+                        : '前回の記録なし',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: previous != null
+                          ? Colors.white
+                          : Colors.white54,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -71,10 +75,8 @@ class MiniTopSetChart extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
             TopSetComboChart(
               points: points,
-              target: target,
               height: 160,
             ),
           ],
