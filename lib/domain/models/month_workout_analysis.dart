@@ -27,7 +27,7 @@ class MonthWorkoutAnalysis {
     required this.trainingDays,
     required this.totalSets,
     required this.prExerciseCount,
-    required this.muscleGroupDayCounts,
+    required this.muscleGroupSetCounts,
     required this.highlights,
     this.previousMonthTrainingDays,
     this.previousMonthTotalSets,
@@ -39,7 +39,7 @@ class MonthWorkoutAnalysis {
   final int trainingDays;
   final int totalSets;
   final int prExerciseCount;
-  final Map<MuscleGroup, int> muscleGroupDayCounts;
+  final Map<MuscleGroup, int> muscleGroupSetCounts;
   final List<MonthProgressHighlight> highlights;
   final int? previousMonthTrainingDays;
   final int? previousMonthTotalSets;

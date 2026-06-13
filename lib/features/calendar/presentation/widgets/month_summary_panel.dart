@@ -65,7 +65,7 @@ class _MonthSummaryBody extends StatelessWidget {
               if (analysis.hasData) ...[
                 _StatsRow(analysis: analysis),
                 const SizedBox(height: 20),
-                _MuscleBalanceSection(counts: analysis.muscleGroupDayCounts),
+                _MuscleBalanceSection(counts: analysis.muscleGroupSetCounts),
                 const SizedBox(height: 20),
                 _ProgressSection(
                   prCount: analysis.prExerciseCount,
@@ -254,7 +254,7 @@ class _MuscleBalanceSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              '部位別トレーニング日数（合計$total）',
+              '部位別セット数（合計$total）',
               style: TextStyle(
                 fontSize: 10,
                 color: Colors.white.withValues(alpha: 0.35),

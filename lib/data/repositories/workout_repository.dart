@@ -98,7 +98,7 @@ class WorkoutRepository {
       trainingDays: basic.trainingDays,
       totalSets: basic.totalSets,
       prExerciseCount: improvedKeys.length,
-      muscleGroupDayCounts: basic.muscleGroupDayCounts,
+      muscleGroupSetCounts: basic.muscleGroupSetCounts,
       highlights: topHighlights,
       previousMonthTrainingDays: prevBasic.trainingDays,
       previousMonthTotalSets: prevBasic.totalSets,
@@ -177,7 +177,7 @@ class WorkoutRepository {
       ({
         int trainingDays,
         int totalSets,
-        Map<MuscleGroup, int> muscleGroupDayCounts,
+        Map<MuscleGroup, int> muscleGroupSetCounts,
       })> _computeMonthBasicStats(DateTime monthStart) async {
     final start = monthStart;
     final end = DateTime(monthStart.year, monthStart.month + 1, 0, 23, 59, 59);
@@ -188,7 +188,7 @@ class WorkoutRepository {
 
     var totalSets = 0;
     var trainingDays = 0;
-    final muscleGroupDayCounts = <MuscleGroup, int>{};
+    final muscleGroupSetCounts = <MuscleGroup, int>{};
 
     for (final session in sessions) {
       final records = await _isar.exerciseRecords
@@ -197,30 +197,28 @@ class WorkoutRepository {
           .findAll();
 
       var sessionSets = 0;
-      final groupsThisDay = <MuscleGroup>{};
 
       for (final record in records) {
         final sets = await getSetsForExercise(record.id);
         if (sets.isEmpty) continue;
         sessionSets += sets.length;
-        groupsThisDay.add(record.muscleGroup.displayGroup);
+
+        final group = record.muscleGroup.displayGroup;
+        if (group.isLegacy) continue;
+        muscleGroupSetCounts[group] =
+            (muscleGroupSetCounts[group] ?? 0) + sets.length;
       }
 
       if (sessionSets == 0) continue;
 
       trainingDays++;
       totalSets += sessionSets;
-
-      for (final group in groupsThisDay) {
-        if (group.isLegacy) continue;
-        muscleGroupDayCounts[group] = (muscleGroupDayCounts[group] ?? 0) + 1;
-      }
     }
 
     return (
       trainingDays: trainingDays,
       totalSets: totalSets,
-      muscleGroupDayCounts: muscleGroupDayCounts,
+      muscleGroupSetCounts: muscleGroupSetCounts,
     );
   }
 
