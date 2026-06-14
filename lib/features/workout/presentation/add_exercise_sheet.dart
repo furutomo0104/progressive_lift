@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/domain/models/selectable_exercise.dart';
+import 'package:progressive_lift/features/exercises/presentation/exercise_reorder_screen.dart';
 import 'package:progressive_lift/features/workout/presentation/edit_exercise_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 import 'package:progressive_lift/shared/widgets/muscle_group_chip.dart';
@@ -131,6 +132,15 @@ class _AddExerciseSheet extends HookConsumerWidget {
       }
     }
 
+    Future<void> openReorder() async {
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (_) => const ExerciseReorderScreen(),
+        ),
+      );
+      ref.invalidate(selectableExercisesProvider);
+    }
+
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.88,
@@ -158,10 +168,21 @@ class _AddExerciseSheet extends HookConsumerWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Text(
-                    '種目を追加',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '種目を追加',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: openReorder,
+                        icon: const Icon(Icons.swap_vert, size: 18),
+                        label: const Text('並び替え'),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(

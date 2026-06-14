@@ -22,18 +22,39 @@ const CardioRecordSchema = CollectionSchema(
       name: r'durationMinutes',
       type: IsarType.long,
     ),
-    r'memo': PropertySchema(
+    r'intervalRestSeconds': PropertySchema(
       id: 1,
+      name: r'intervalRestSeconds',
+      type: IsarType.long,
+    ),
+    r'intervalRounds': PropertySchema(
+      id: 2,
+      name: r'intervalRounds',
+      type: IsarType.long,
+    ),
+    r'intervalWorkSeconds': PropertySchema(
+      id: 3,
+      name: r'intervalWorkSeconds',
+      type: IsarType.long,
+    ),
+    r'memo': PropertySchema(
+      id: 4,
       name: r'memo',
       type: IsarType.string,
     ),
+    r'mode': PropertySchema(
+      id: 5,
+      name: r'mode',
+      type: IsarType.byte,
+      enumMap: _CardioRecordmodeEnumValueMap,
+    ),
     r'sessionId': PropertySchema(
-      id: 2,
+      id: 6,
       name: r'sessionId',
       type: IsarType.long,
     ),
     r'type': PropertySchema(
-      id: 3,
+      id: 7,
       name: r'type',
       type: IsarType.byte,
       enumMap: _CardioRecordtypeEnumValueMap,
@@ -89,9 +110,13 @@ void _cardioRecordSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.durationMinutes);
-  writer.writeString(offsets[1], object.memo);
-  writer.writeLong(offsets[2], object.sessionId);
-  writer.writeByte(offsets[3], object.type.index);
+  writer.writeLong(offsets[1], object.intervalRestSeconds);
+  writer.writeLong(offsets[2], object.intervalRounds);
+  writer.writeLong(offsets[3], object.intervalWorkSeconds);
+  writer.writeString(offsets[4], object.memo);
+  writer.writeByte(offsets[5], object.mode.index);
+  writer.writeLong(offsets[6], object.sessionId);
+  writer.writeByte(offsets[7], object.type.index);
 }
 
 CardioRecord _cardioRecordDeserialize(
@@ -103,10 +128,16 @@ CardioRecord _cardioRecordDeserialize(
   final object = CardioRecord();
   object.durationMinutes = reader.readLong(offsets[0]);
   object.id = id;
-  object.memo = reader.readStringOrNull(offsets[1]);
-  object.sessionId = reader.readLong(offsets[2]);
+  object.intervalRestSeconds = reader.readLongOrNull(offsets[1]);
+  object.intervalRounds = reader.readLongOrNull(offsets[2]);
+  object.intervalWorkSeconds = reader.readLongOrNull(offsets[3]);
+  object.memo = reader.readStringOrNull(offsets[4]);
+  object.mode =
+      _CardioRecordmodeValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+          CardioRecordMode.duration;
+  object.sessionId = reader.readLong(offsets[6]);
   object.type =
-      _CardioRecordtypeValueEnumMap[reader.readByteOrNull(offsets[3])] ??
+      _CardioRecordtypeValueEnumMap[reader.readByteOrNull(offsets[7])] ??
           CardioType.run;
   return object;
 }
@@ -121,10 +152,19 @@ P _cardioRecordDeserializeProp<P>(
     case 0:
       return (reader.readLong(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 3:
+      return (reader.readLongOrNull(offset)) as P;
+    case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
+      return (_CardioRecordmodeValueEnumMap[reader.readByteOrNull(offset)] ??
+          CardioRecordMode.duration) as P;
+    case 6:
+      return (reader.readLong(offset)) as P;
+    case 7:
       return (_CardioRecordtypeValueEnumMap[reader.readByteOrNull(offset)] ??
           CardioType.run) as P;
     default:
@@ -132,6 +172,14 @@ P _cardioRecordDeserializeProp<P>(
   }
 }
 
+const _CardioRecordmodeEnumValueMap = {
+  'duration': 0,
+  'interval': 1,
+};
+const _CardioRecordmodeValueEnumMap = {
+  0: CardioRecordMode.duration,
+  1: CardioRecordMode.interval,
+};
 const _CardioRecordtypeEnumValueMap = {
   'run': 0,
   'walk': 1,
@@ -449,6 +497,228 @@ extension CardioRecordQueryFilter
     });
   }
 
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRestSecondsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'intervalRestSeconds',
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRestSecondsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'intervalRestSeconds',
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRestSecondsEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'intervalRestSeconds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRestSecondsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'intervalRestSeconds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRestSecondsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'intervalRestSeconds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRestSecondsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'intervalRestSeconds',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRoundsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'intervalRounds',
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRoundsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'intervalRounds',
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRoundsEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'intervalRounds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRoundsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'intervalRounds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRoundsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'intervalRounds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalRoundsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'intervalRounds',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalWorkSecondsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'intervalWorkSeconds',
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalWorkSecondsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'intervalWorkSeconds',
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalWorkSecondsEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'intervalWorkSeconds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalWorkSecondsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'intervalWorkSeconds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalWorkSecondsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'intervalWorkSeconds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      intervalWorkSecondsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'intervalWorkSeconds',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition> memoIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -600,6 +870,60 @@ extension CardioRecordQueryFilter
     });
   }
 
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition> modeEqualTo(
+      CardioRecordMode value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
+      modeGreaterThan(
+    CardioRecordMode value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition> modeLessThan(
+    CardioRecordMode value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition> modeBetween(
+    CardioRecordMode lower,
+    CardioRecordMode upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<CardioRecord, CardioRecord, QAfterFilterCondition>
       sessionIdEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
@@ -733,6 +1057,48 @@ extension CardioRecordQuerySortBy
     });
   }
 
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      sortByIntervalRestSeconds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRestSeconds', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      sortByIntervalRestSecondsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRestSeconds', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      sortByIntervalRounds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRounds', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      sortByIntervalRoundsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRounds', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      sortByIntervalWorkSeconds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalWorkSeconds', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      sortByIntervalWorkSecondsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalWorkSeconds', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> sortByMemo() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'memo', Sort.asc);
@@ -742,6 +1108,18 @@ extension CardioRecordQuerySortBy
   QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> sortByMemoDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'memo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> sortByMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> sortByModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.desc);
     });
   }
 
@@ -798,6 +1176,48 @@ extension CardioRecordQuerySortThenBy
     });
   }
 
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      thenByIntervalRestSeconds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRestSeconds', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      thenByIntervalRestSecondsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRestSeconds', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      thenByIntervalRounds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRounds', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      thenByIntervalRoundsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalRounds', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      thenByIntervalWorkSeconds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalWorkSeconds', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy>
+      thenByIntervalWorkSecondsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'intervalWorkSeconds', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> thenByMemo() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'memo', Sort.asc);
@@ -807,6 +1227,18 @@ extension CardioRecordQuerySortThenBy
   QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> thenByMemoDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'memo', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> thenByMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QAfterSortBy> thenByModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.desc);
     });
   }
 
@@ -844,10 +1276,37 @@ extension CardioRecordQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CardioRecord, CardioRecord, QDistinct>
+      distinctByIntervalRestSeconds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'intervalRestSeconds');
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QDistinct>
+      distinctByIntervalRounds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'intervalRounds');
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QDistinct>
+      distinctByIntervalWorkSeconds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'intervalWorkSeconds');
+    });
+  }
+
   QueryBuilder<CardioRecord, CardioRecord, QDistinct> distinctByMemo(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'memo', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecord, QDistinct> distinctByMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mode');
     });
   }
 
@@ -878,9 +1337,36 @@ extension CardioRecordQueryProperty
     });
   }
 
+  QueryBuilder<CardioRecord, int?, QQueryOperations>
+      intervalRestSecondsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'intervalRestSeconds');
+    });
+  }
+
+  QueryBuilder<CardioRecord, int?, QQueryOperations> intervalRoundsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'intervalRounds');
+    });
+  }
+
+  QueryBuilder<CardioRecord, int?, QQueryOperations>
+      intervalWorkSecondsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'intervalWorkSeconds');
+    });
+  }
+
   QueryBuilder<CardioRecord, String?, QQueryOperations> memoProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'memo');
+    });
+  }
+
+  QueryBuilder<CardioRecord, CardioRecordMode, QQueryOperations>
+      modeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mode');
     });
   }
 

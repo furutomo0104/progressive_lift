@@ -17,4 +17,7 @@ class CustomExerciseTemplate {
 
   @Index()
   late DateTime createdAt;
+
+  /// 一覧表示順（-1 = デフォルト順）
+  int sortOrder = -1;
 }

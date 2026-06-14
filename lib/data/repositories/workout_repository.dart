@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:progressive_lift/core/enums/cardio_record_mode.dart';
 import 'package:progressive_lift/core/enums/cardio_type.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/core/constants/exercise_catalog.dart';
@@ -438,6 +439,8 @@ class WorkoutRepository {
   Future<List<SelectableExercise>> getSelectableExercises() async {
     final prefs = await getExercisePreferences();
     final prefByKey = {for (final p in prefs) p.exerciseKey: p};
+    final customs = await getCustomTemplates();
+    final customByKey = {for (final c in customs) c.exerciseKey: c};
 
     final items = <SelectableExercise>[];
 
@@ -456,7 +459,6 @@ class WorkoutRepository {
       );
     }
 
-    final customs = await getCustomTemplates();
     for (final c in customs) {
       items.add(
         SelectableExercise(
@@ -469,7 +471,90 @@ class WorkoutRepository {
       );
     }
 
+    items.sort(
+      (a, b) => _effectiveSortOrder(
+        a,
+        prefByKey: prefByKey,
+        customByKey: customByKey,
+      ).compareTo(
+        _effectiveSortOrder(
+          b,
+          prefByKey: prefByKey,
+          customByKey: customByKey,
+        ),
+      ),
+    );
+
     return items;
+  }
+
+  Future<void> reorderExercises(List<String> exerciseKeysInOrder) async {
+    await _isar.writeTxn(() async {
+      for (var i = 0; i < exerciseKeysInOrder.length; i++) {
+        final key = exerciseKeysInOrder[i];
+        final custom = await _isar.customExerciseTemplates
+            .where()
+            .exerciseKeyEqualTo(key)
+            .findFirst();
+        if (custom != null) {
+          custom.sortOrder = i;
+          await _isar.customExerciseTemplates.put(custom);
+          continue;
+        }
+
+        var pref = await getPreferenceForKey(key);
+        if (pref == null) {
+          final preset = ExerciseCatalog.findByKey(key);
+          pref = ExercisePreference()
+            ..exerciseKey = key
+            ..muscleGroupOverride = preset?.muscleGroup ?? MuscleGroup.chest
+            ..hasMuscleGroupOverride = false;
+        }
+        pref.sortOrder = i;
+        await _isar.exercisePreferences.put(pref);
+      }
+    });
+  }
+
+  int _effectiveSortOrder(
+    SelectableExercise exercise, {
+    required Map<String, ExercisePreference> prefByKey,
+    required Map<String, CustomExerciseTemplate> customByKey,
+  }) {
+    if (exercise.isCustom) {
+      final custom = customByKey[exercise.exerciseKey];
+      if (custom != null && custom.sortOrder >= 0) return custom.sortOrder;
+      return _defaultCustomSortOrder(custom?.createdAt);
+    }
+
+    final pref = prefByKey[exercise.exerciseKey];
+    if (pref != null && pref.sortOrder >= 0) return pref.sortOrder;
+    return _defaultPresetSortOrder(exercise.exerciseKey);
+  }
+
+  int _defaultPresetSortOrder(String exerciseKey) {
+    for (var i = 0; i < ExerciseCatalog.templates.length; i++) {
+      if (ExerciseCatalog.templates[i].key == exerciseKey) return i;
+    }
+    return 100000;
+  }
+
+  int _defaultCustomSortOrder(DateTime? createdAt) {
+    if (createdAt == null) return 200000;
+    return 100000 + createdAt.millisecondsSinceEpoch ~/ 1000;
+  }
+
+  Future<int> _nextSortOrder() async {
+    final prefs = await getExercisePreferences();
+    final customs = await getCustomTemplates();
+    var maxOrder = -1;
+    for (final p in prefs) {
+      if (p.sortOrder > maxOrder) maxOrder = p.sortOrder;
+    }
+    for (final c in customs) {
+      if (c.sortOrder > maxOrder) maxOrder = c.sortOrder;
+    }
+    return maxOrder + 1;
   }
 
   Future<void> updateCustomTemplate({
@@ -530,7 +615,8 @@ class WorkoutRepository {
       ..exerciseKey = key
       ..name = trimmed
       ..muscleGroup = muscleGroup
-      ..createdAt = DateTime.now();
+      ..createdAt = DateTime.now()
+      ..sortOrder = await _nextSortOrder();
     await _isar.writeTxn(() => _isar.customExerciseTemplates.put(template));
     return template;
   }
@@ -567,13 +653,21 @@ class WorkoutRepository {
   Future<CardioRecord> addCardio({
     required int sessionId,
     required CardioType type,
+    required CardioRecordMode mode,
     required int durationMinutes,
+    int? intervalRounds,
+    int? intervalWorkSeconds,
+    int? intervalRestSeconds,
     String? memo,
   }) async {
     final record = CardioRecord()
       ..sessionId = sessionId
       ..type = type
+      ..mode = mode
       ..durationMinutes = durationMinutes
+      ..intervalRounds = intervalRounds
+      ..intervalWorkSeconds = intervalWorkSeconds
+      ..intervalRestSeconds = intervalRestSeconds
       ..memo = memo?.trim().isEmpty == true ? null : memo?.trim();
     await _isar.writeTxn(() => _isar.cardioRecords.put(record));
     return record;
@@ -582,13 +676,21 @@ class WorkoutRepository {
   Future<void> updateCardio({
     required int id,
     required CardioType type,
+    required CardioRecordMode mode,
     required int durationMinutes,
+    int? intervalRounds,
+    int? intervalWorkSeconds,
+    int? intervalRestSeconds,
     String? memo,
   }) async {
     final record = await _isar.cardioRecords.get(id);
     if (record == null) return;
     record.type = type;
+    record.mode = mode;
     record.durationMinutes = durationMinutes;
+    record.intervalRounds = intervalRounds;
+    record.intervalWorkSeconds = intervalWorkSeconds;
+    record.intervalRestSeconds = intervalRestSeconds;
     record.memo = memo?.trim().isEmpty == true ? null : memo?.trim();
     await _isar.writeTxn(() => _isar.cardioRecords.put(record));
   }
@@ -635,10 +737,20 @@ class WorkoutRepository {
       );
     }
 
-    items.sort(
-      (a, b) => (b.lastTrainedDate ?? DateTime(1970))
-          .compareTo(a.lastTrainedDate ?? DateTime(1970)),
-    );
+    final selectable = await getSelectableExercises();
+    final orderIndex = {
+      for (var i = 0; i < selectable.length; i++) selectable[i].exerciseKey: i,
+    };
+
+    items.sort((a, b) {
+      final orderA = orderIndex[a.exerciseKey];
+      final orderB = orderIndex[b.exerciseKey];
+      if (orderA != null && orderB != null) return orderA.compareTo(orderB);
+      if (orderA != null) return -1;
+      if (orderB != null) return 1;
+      return (b.lastTrainedDate ?? DateTime(1970))
+          .compareTo(a.lastTrainedDate ?? DateTime(1970));
+    });
     return items;
   }
 }

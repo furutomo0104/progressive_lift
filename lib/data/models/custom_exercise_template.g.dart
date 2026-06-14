@@ -38,6 +38,11 @@ const CustomExerciseTemplateSchema = CollectionSchema(
       id: 3,
       name: r'name',
       type: IsarType.string,
+    ),
+    r'sortOrder': PropertySchema(
+      id: 4,
+      name: r'sortOrder',
+      type: IsarType.long,
     )
   },
   estimateSize: _customExerciseTemplateEstimateSize,
@@ -102,6 +107,7 @@ void _customExerciseTemplateSerialize(
   writer.writeString(offsets[1], object.exerciseKey);
   writer.writeByte(offsets[2], object.muscleGroup.index);
   writer.writeString(offsets[3], object.name);
+  writer.writeLong(offsets[4], object.sortOrder);
 }
 
 CustomExerciseTemplate _customExerciseTemplateDeserialize(
@@ -118,6 +124,7 @@ CustomExerciseTemplate _customExerciseTemplateDeserialize(
           reader.readByteOrNull(offsets[2])] ??
       MuscleGroup.chest;
   object.name = reader.readString(offsets[3]);
+  object.sortOrder = reader.readLong(offsets[4]);
   return object;
 }
 
@@ -138,6 +145,8 @@ P _customExerciseTemplateDeserializeProp<P>(
           MuscleGroup.chest) as P;
     case 3:
       return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -910,6 +919,62 @@ extension CustomExerciseTemplateQueryFilter on QueryBuilder<
       ));
     });
   }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate,
+      QAfterFilterCondition> sortOrderEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sortOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate,
+      QAfterFilterCondition> sortOrderGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sortOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate,
+      QAfterFilterCondition> sortOrderLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sortOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate,
+      QAfterFilterCondition> sortOrderBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sortOrder',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension CustomExerciseTemplateQueryObject on QueryBuilder<
@@ -973,6 +1038,20 @@ extension CustomExerciseTemplateQuerySortBy
       sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate, QAfterSortBy>
+      sortBySortOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sortOrder', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate, QAfterSortBy>
+      sortBySortOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sortOrder', Sort.desc);
     });
   }
 }
@@ -1048,6 +1127,20 @@ extension CustomExerciseTemplateQuerySortThenBy on QueryBuilder<
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate, QAfterSortBy>
+      thenBySortOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sortOrder', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate, QAfterSortBy>
+      thenBySortOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sortOrder', Sort.desc);
+    });
+  }
 }
 
 extension CustomExerciseTemplateQueryWhereDistinct
@@ -1077,6 +1170,13 @@ extension CustomExerciseTemplateQueryWhereDistinct
       distinctByName({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, CustomExerciseTemplate, QDistinct>
+      distinctBySortOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sortOrder');
     });
   }
 }
@@ -1114,6 +1214,13 @@ extension CustomExerciseTemplateQueryProperty on QueryBuilder<
       nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<CustomExerciseTemplate, int, QQueryOperations>
+      sortOrderProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sortOrder');
     });
   }
 }

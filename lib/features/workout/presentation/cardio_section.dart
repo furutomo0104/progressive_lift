@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/core/theme/cardio_style.dart';
 import 'package:progressive_lift/data/models/cardio_record.dart';
+import 'package:progressive_lift/domain/models/cardio_record_summary.dart';
 import 'package:progressive_lift/features/workout/presentation/add_cardio_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 import 'package:progressive_lift/shared/widgets/swipe_delete_tile.dart';
@@ -107,7 +108,7 @@ class CardioSection extends HookConsumerWidget {
                       color: CardioStyle.accent,
                       size: 22,
                     ),
-                    title: Text('${r.type.label}  ${r.durationMinutes}分'),
+                    title: Text('${r.type.label}  ${r.detailLabel}'),
                     subtitle: r.memo != null && r.memo!.isNotEmpty
                         ? Text(
                             r.memo!,

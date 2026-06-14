@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/domain/models/exercise_list_item.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/exercise_detail_screen.dart';
+import 'package:progressive_lift/features/exercises/presentation/exercise_reorder_screen.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 import 'package:progressive_lift/shared/widgets/muscle_group_chip.dart';
 
@@ -20,6 +21,19 @@ class ExercisesScreen extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('種目'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.swap_vert),
+            tooltip: '並び替え',
+            onPressed: () async {
+              await Navigator.of(context).push<bool>(
+                MaterialPageRoute<bool>(
+                  builder: (_) => const ExerciseReorderScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: itemsAsync.when(
         data: (items) {

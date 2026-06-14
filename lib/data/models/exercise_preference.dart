@@ -19,4 +19,7 @@ class ExercisePreference {
   late MuscleGroup muscleGroupOverride;
 
   bool isHidden = false;
+
+  /// 一覧表示順（-1 = デフォルト順）
+  int sortOrder = -1;
 }
