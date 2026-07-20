@@ -10,7 +10,7 @@ class ProgressiveLiftApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       child: MaterialApp(
-        title: 'Progressive Lift',
+        title: '筋記録',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
         home: const MainShell(),

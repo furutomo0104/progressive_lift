@@ -5,6 +5,6 @@ void main() {
   testWidgets('アプリが起動する', (WidgetTester tester) async {
     await tester.pumpWidget(const ProgressiveLiftApp());
     await tester.pump();
-    expect(find.text('Progressive Lift'), findsOneWidget);
+    expect(find.text('筋記録'), findsOneWidget);
   });
 }

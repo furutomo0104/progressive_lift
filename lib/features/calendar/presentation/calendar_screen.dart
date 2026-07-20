@@ -28,7 +28,7 @@ class CalendarScreen extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Progressive Lift'),
+        title: const Text('筋記録'),
         actions: [
           IconButton(
             tooltip: 'プレミアム切替（デモ）',

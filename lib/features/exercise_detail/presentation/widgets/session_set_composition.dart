@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
+import 'package:progressive_lift/domain/services/volume_calculator.dart';
 
 class SessionSetComposition extends StatelessWidget {
   const SessionSetComposition({
@@ -23,8 +24,8 @@ class SessionSetComposition extends StatelessWidget {
     if (sets.isEmpty) return const SizedBox.shrink();
 
     final sorted = [...sets]..sort((a, b) => a.setOrder.compareTo(b.setOrder));
-    final maxWeight = sorted
-        .map((s) => s.weightKg)
+    final maxVolume = sorted
+        .map(VolumeCalculator.setVolume)
         .reduce((a, b) => a > b ? a : b);
 
     return Column(
@@ -36,7 +37,7 @@ class SessionSetComposition extends StatelessWidget {
             child: _SetBarRow(
               order: i + 1,
               set: sorted[i],
-              maxWeight: maxWeight,
+              maxVolume: maxVolume,
               color: _barColors[i % _barColors.length],
             ),
           ),
@@ -49,18 +50,19 @@ class _SetBarRow extends StatelessWidget {
   const _SetBarRow({
     required this.order,
     required this.set,
-    required this.maxWeight,
+    required this.maxVolume,
     required this.color,
   });
 
   final int order;
   final ExerciseSet set;
-  final double maxWeight;
+  final double maxVolume;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final ratio = maxWeight > 0 ? (set.weightKg / maxWeight).clamp(0.08, 1.0) : 1.0;
+    final volume = VolumeCalculator.setVolume(set);
+    final ratio = maxVolume > 0 ? (volume / maxVolume).clamp(0.0, 1.0) : 0.0;
     final weightLabel = set.weightKg % 1 == 0
         ? set.weightKg.toStringAsFixed(0)
         : set.weightKg.toStringAsFixed(1);
@@ -81,7 +83,11 @@ class _SetBarRow extends StatelessWidget {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final barWidth = constraints.maxWidth * ratio;
+              final minBarWidth = ratio > 0 ? 12.0 : 0.0;
+              final barWidth = (constraints.maxWidth * ratio).clamp(
+                minBarWidth,
+                constraints.maxWidth,
+              );
               return Stack(
                 alignment: Alignment.centerLeft,
                 children: [
@@ -93,14 +99,15 @@ class _SetBarRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  Container(
-                    height: 22,
-                    width: barWidth,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(4),
+                  if (ratio > 0)
+                    Container(
+                      height: 22,
+                      width: barWidth,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
-                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(

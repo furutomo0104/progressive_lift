@@ -3,6 +3,7 @@ import 'package:progressive_lift/core/enums/cardio_record_mode.dart';
 import 'package:progressive_lift/core/enums/cardio_type.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/core/constants/exercise_catalog.dart';
+import 'package:progressive_lift/core/utils/exercise_list_sort.dart';
 import 'package:progressive_lift/data/models/cardio_record.dart';
 import 'package:progressive_lift/data/models/custom_exercise_template.dart';
 import 'package:progressive_lift/data/models/exercise_preference.dart';
@@ -488,16 +489,21 @@ class WorkoutRepository {
     }
 
     items.sort(
-      (a, b) => _effectiveSortOrder(
-        a,
-        prefByKey: prefByKey,
-        customByKey: customByKey,
-      ).compareTo(
-        _effectiveSortOrder(
+      (a, b) => compareExerciseListOrder(
+        muscleGroupA: a.muscleGroup,
+        muscleGroupB: b.muscleGroup,
+        sortOrderA: _effectiveSortOrder(
+          a,
+          prefByKey: prefByKey,
+          customByKey: customByKey,
+        ),
+        sortOrderB: _effectiveSortOrder(
           b,
           prefByKey: prefByKey,
           customByKey: customByKey,
         ),
+        nameA: a.name,
+        nameB: b.name,
       ),
     );
 
@@ -761,11 +767,14 @@ class WorkoutRepository {
     items.sort((a, b) {
       final orderA = orderIndex[a.exerciseKey];
       final orderB = orderIndex[b.exerciseKey];
-      if (orderA != null && orderB != null) return orderA.compareTo(orderB);
-      if (orderA != null) return -1;
-      if (orderB != null) return 1;
-      return (b.lastTrainedDate ?? DateTime(1970))
-          .compareTo(a.lastTrainedDate ?? DateTime(1970));
+      return compareExerciseListOrder(
+        muscleGroupA: a.muscleGroup,
+        muscleGroupB: b.muscleGroup,
+        sortOrderA: orderA ?? 100000,
+        sortOrderB: orderB ?? 100000,
+        nameA: a.name,
+        nameB: b.name,
+      );
     });
     return items;
   }

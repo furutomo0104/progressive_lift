@@ -122,7 +122,7 @@ class ExerciseDetailScreen extends HookConsumerWidget {
                       if (selectedTab.value == _DetailTab.history) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'セットごとの重量バー（S1, S2…）',
+                          'セットごとの重量×レップ（総負荷）',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.white54,

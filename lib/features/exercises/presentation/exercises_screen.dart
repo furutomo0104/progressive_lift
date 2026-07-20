@@ -47,16 +47,6 @@ class ExercisesScreen extends HookConsumerWidget {
             return item.name.toLowerCase().contains(q);
           }).toList();
 
-          if (filterGroup.value == null) {
-            filtered.sort((a, b) {
-              final groupIndex = MuscleGroup.selectable.indexOf;
-              final ga = groupIndex(a.muscleGroup);
-              final gb = groupIndex(b.muscleGroup);
-              if (ga != gb) return ga.compareTo(gb);
-              return a.name.compareTo(b.name);
-            });
-          }
-
           return Column(
             children: [
               Padding(
