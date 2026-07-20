@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/mini_top_set_chart.dart';
+import 'package:progressive_lift/features/workout/presentation/reassign_exercise_record_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 import 'package:progressive_lift/shared/widgets/muscle_group_chip.dart';
 import 'package:progressive_lift/shared/widgets/swipe_delete_tile.dart';
+import 'package:progressive_lift/shared/widgets/swipe_edit_delete_tile.dart';
 
 class ExerciseCard extends HookConsumerWidget {
   const ExerciseCard({
@@ -15,6 +17,7 @@ class ExerciseCard extends HookConsumerWidget {
     required this.exercise,
     required this.sets,
     required this.expanded,
+    required this.selectedDay,
     required this.onToggle,
     required this.onChanged,
   });
@@ -22,6 +25,7 @@ class ExerciseCard extends HookConsumerWidget {
   final ExerciseRecord exercise;
   final List<ExerciseSet> sets;
   final bool expanded;
+  final DateTime selectedDay;
   final VoidCallback onToggle;
   final VoidCallback onChanged;
 
@@ -73,15 +77,34 @@ class ExerciseCard extends HookConsumerWidget {
 
     void dismissKeyboard() => FocusManager.instance.primaryFocus?.unfocus();
 
+    Future<void> reassignExercise() async {
+      final result = await showReassignExerciseRecordSheet(
+        context,
+        recordId: exercise.id,
+        currentExerciseKey: exercise.exerciseKey,
+        currentName: exercise.name,
+      );
+      if (result == null) return;
+      ref.invalidate(topSetSeriesProvider(result.oldExerciseKey));
+      ref.invalidate(topSetSeriesProvider(result.newExerciseKey));
+      ref.invalidate(exerciseHistoryProvider(result.oldExerciseKey));
+      ref.invalidate(exerciseHistoryProvider(result.newExerciseKey));
+      ref.read(exerciseCatalogTickProvider.notifier).bump();
+      ref.read(calendarRefreshTickProvider.notifier).bump();
+      onChanged();
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SwipeDeleteTile(
+          SwipeEditDeleteTile(
             key: ValueKey('exercise-header-${exercise.id}'),
             groupTag: 'exercise',
+            editLabel: '種目修正',
+            onEdit: reassignExercise,
             onDelete: deleteExercise,
             child: InkWell(
               onTap: onToggle,
@@ -252,6 +275,7 @@ class ExerciseCard extends HookConsumerWidget {
                   MiniTopSetChart(
                     exerciseKey: exercise.exerciseKey,
                     exerciseName: exercise.name,
+                    currentDay: selectedDay,
                   ),
                 ],
               ),

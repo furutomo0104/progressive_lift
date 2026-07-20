@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
+import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 import 'package:progressive_lift/domain/services/one_rm_calculator.dart';
+import 'package:progressive_lift/domain/services/volume_calculator.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/ai_suggest_card.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/estimated_one_rm_chart.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/exercise_detail_history_tab.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/top_set_combo_chart.dart';
+import 'package:progressive_lift/features/exercise_detail/presentation/widgets/volume_trend_chart.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
-enum _DetailTab { topSet, oneRm, history }
+enum _DetailTab { topSet, oneRm, volume, history }
 
 class ExerciseDetailScreen extends HookConsumerWidget {
   const ExerciseDetailScreen({
@@ -38,8 +41,12 @@ class ExerciseDetailScreen extends HookConsumerWidget {
       appBar: AppBar(title: Text(title)),
       body: seriesAsync.when(
         data: (points) {
-          final previous =
-              points.length >= 2 ? points[points.length - 2] : null;
+          final previous = points.isEmpty
+              ? null
+              : TopSetExtractor.previousSessionTop(
+                  points,
+                  excludeDate: points.last.date,
+                );
           final oneRmPoints = OneRmCalculator.fromTopSetSeries(points);
 
           return ListView(
@@ -53,11 +60,15 @@ class ExerciseDetailScreen extends HookConsumerWidget {
                 segments: const [
                   ButtonSegment(
                     value: _DetailTab.topSet,
-                    label: Text('トップセット'),
+                    label: Text('TOP'),
                   ),
                   ButtonSegment(
                     value: _DetailTab.oneRm,
                     label: Text('1RM'),
+                  ),
+                  ButtonSegment(
+                    value: _DetailTab.volume,
+                    label: Text('Vol'),
                   ),
                   ButtonSegment(
                     value: _DetailTab.history,
@@ -98,6 +109,26 @@ class ExerciseDetailScreen extends HookConsumerWidget {
                                   ),
                         ),
                       ],
+                      if (selectedTab.value == _DetailTab.volume) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '各トレ日の総ボリューム（重量×レップの合計）',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white54,
+                                  ),
+                        ),
+                      ],
+                      if (selectedTab.value == _DetailTab.history) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'セットごとの重量バー（S1, S2…）',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white54,
+                                  ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       switch (selectedTab.value) {
                         _DetailTab.topSet => TopSetComboChart(
@@ -107,6 +138,20 @@ class ExerciseDetailScreen extends HookConsumerWidget {
                         _DetailTab.oneRm => EstimatedOneRmChart(
                             points: oneRmPoints,
                             height: 280,
+                          ),
+                        _DetailTab.volume => historyAsync.when(
+                            data: (history) => VolumeTrendChart(
+                              points: VolumeCalculator.fromHistory(history),
+                              height: 280,
+                            ),
+                            loading: () => const Padding(
+                              padding: EdgeInsets.all(32),
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            error: (e, _) =>
+                                Text('ボリュームの読み込みエラー: $e'),
                           ),
                         _DetailTab.history => historyAsync.when(
                             data: (history) =>
@@ -138,7 +183,8 @@ class ExerciseDetailScreen extends HookConsumerWidget {
   static String _tabTitle(_DetailTab tab) => switch (tab) {
         _DetailTab.topSet => 'トップセット推移',
         _DetailTab.oneRm => '推定1RM推移',
-        _DetailTab.history => 'セット履歴',
+        _DetailTab.volume => 'ボリューム推移',
+        _DetailTab.history => 'セット構成',
       };
 }
 

@@ -44,6 +44,21 @@ class TopSetExtractor {
     return points;
   }
 
+  /// 指定日（記録中の日など）を除いた、直近の前回トレーニング日のTOP。
+  static TopSetPoint? previousSessionTop(
+    List<TopSetPoint> series, {
+    required DateTime excludeDate,
+  }) {
+    if (series.isEmpty) return null;
+    final exclude = DateTime(excludeDate.year, excludeDate.month, excludeDate.day);
+    TopSetPoint? last;
+    for (final point in series) {
+      if (point.date == exclude) continue;
+      last = point;
+    }
+    return last;
+  }
+
   /// 直近（前回）トップセットを基準に今日の目標を算出
   static WorkoutTarget? buildTarget(TopSetPoint? previousTop) {
     if (previousTop == null) return null;

@@ -196,6 +196,7 @@ class _WorkoutRecordBody extends HookConsumerWidget {
                       exercise: ex,
                       sets: setsByExercise[ex.id] ?? [],
                       expanded: expandedId == ex.id,
+                      selectedDay: selectedDay,
                       onToggle: () => onExpandedChanged(
                         expandedId == ex.id ? null : ex.id,
                       ),

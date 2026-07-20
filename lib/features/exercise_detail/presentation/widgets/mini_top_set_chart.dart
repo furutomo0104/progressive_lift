@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/exercise_detail_screen.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/top_set_combo_chart.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
@@ -10,10 +11,12 @@ class MiniTopSetChart extends ConsumerWidget {
     super.key,
     required this.exerciseKey,
     required this.exerciseName,
+    required this.currentDay,
   });
 
   final String exerciseKey;
   final String exerciseName;
+  final DateTime currentDay;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,8 +39,10 @@ class MiniTopSetChart extends ConsumerWidget {
           );
         }
 
-        final previous =
-            points.length >= 2 ? points[points.length - 2] : null;
+        final previous = TopSetExtractor.previousSessionTop(
+          points,
+          excludeDate: currentDay,
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

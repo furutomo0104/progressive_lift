@@ -351,6 +351,22 @@ class WorkoutRepository {
     });
   }
 
+  Future<String?> reassignExerciseRecord({
+    required int recordId,
+    required String exerciseKey,
+    required String name,
+    required MuscleGroup muscleGroup,
+  }) async {
+    final record = await _isar.exerciseRecords.get(recordId);
+    if (record == null) return null;
+    final oldKey = record.exerciseKey;
+    record.exerciseKey = exerciseKey;
+    record.name = name;
+    record.muscleGroup = muscleGroup;
+    await _isar.writeTxn(() => _isar.exerciseRecords.put(record));
+    return oldKey;
+  }
+
   Future<void> deleteExercise(int exerciseRecordId) async {
     await _isar.writeTxn(() async {
       final sets = await _isar.exerciseSets
