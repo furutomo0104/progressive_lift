@@ -11,67 +11,85 @@ class GeminiOverloadCoachService {
 
   static bool get hasApiKey => _apiKey.trim().isNotEmpty;
 
+  static const _candidateModels = [
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-8b',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro',
+  ];
+
   /// Gemini API を用いて月間レポートを生成（失敗時やAPIキー未設定時は null を返す）
   static Future<AiOverloadReport?> generateGeminiReport(
     MonthOverloadAnalysis analysis,
   ) async {
     if (!hasApiKey || !analysis.hasData) return null;
 
-    try {
-      final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: _apiKey,
-        generationConfig: GenerationConfig(
-          responseMimeType: 'application/json',
-          temperature: 0.7,
-        ),
-        systemInstruction: Content.system(
-          'あなたは「筋記録」専任のプロ・ストレングス＆コンディショニングコーチです。\n'
-          '科学的トレーニング原則（特に漸進性過負荷 / Progressive Overload、有効セット数、プラトー打破、疲労管理）に基づき、'
-          'ユーザーの月間ワークアウトデータを分析し、日本語で具体的かつ論理的・熱意あるフィードバックを提供してください。\n\n'
-          '【出力制約】\n'
-          '指定されたJSONスキーマに従い、有効なJSONオブジェクトのみを返してください。マークダウンの囲み（```json）は不要です。',
-        ),
-      );
+    final prompt = _buildAnalysisPrompt(analysis);
 
-      final prompt = _buildAnalysisPrompt(analysis);
-      final response = await model.generateContent([Content.text(prompt)]);
-      final rawText = response.text?.trim();
+    for (final modelName in _candidateModels) {
+      try {
+        final model = GenerativeModel(
+          model: modelName,
+          apiKey: _apiKey,
+          generationConfig: GenerationConfig(
+            responseMimeType: 'application/json',
+            temperature: 0.7,
+          ),
+          systemInstruction: Content.system(
+            'あなたは「筋記録」専任のプロ・ストレングス＆コンディショニングコーチです。\n'
+            '科学的トレーニング原則（特に漸進性過負荷 / Progressive Overload、有効セット数、プラトー打破、疲労管理）に基づき、'
+            'ユーザーの月間ワークアウトデータを分析し、日本語で具体的かつ論理的・熱意あるフィードバックを提供してください。\n\n'
+            '【出力制約】\n'
+            '指定されたJSONスキーマに従い、有効なJSONオブジェクトのみを返してください。マークダウンの囲み（```json）は不要です。',
+          ),
+        );
 
-      if (rawText == null || rawText.isEmpty) return null;
+        final response = await model.generateContent([Content.text(prompt)]);
+        final rawText = response.text?.trim();
 
-      final jsonMap = jsonDecode(_cleanJsonText(rawText)) as Map<String, dynamic>;
+        if (rawText == null || rawText.isEmpty) continue;
 
-      final rankGrade = (jsonMap['rankGrade'] as String?)?.trim() ?? 'A';
-      final gradeTitle = (jsonMap['gradeTitle'] as String?)?.trim() ?? '過負荷の達成';
-      final scoreSummary = (jsonMap['scoreSummary'] as String?)?.trim() ?? '';
-      final strengthSummary = (jsonMap['strengthSummary'] as String?)?.trim() ?? '';
-      final plateauWarning = (jsonMap['plateauWarning'] as String?)?.trim();
-      final volumeBalanceSummary =
-          (jsonMap['volumeBalanceSummary'] as String?)?.trim() ?? '';
-      final rawGoals = jsonMap['nextMonthGoals'] as List<dynamic>? ?? [];
-      final nextMonthGoals = rawGoals
-          .map((e) => e.toString().trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
+        final jsonMap =
+            jsonDecode(_cleanJsonText(rawText)) as Map<String, dynamic>;
 
-      return AiOverloadReport(
-        rankGrade: rankGrade,
-        gradeTitle: gradeTitle,
-        scoreSummary: scoreSummary,
-        strengthSummary: strengthSummary,
-        plateauWarning:
-            plateauWarning?.isEmpty == true ? null : plateauWarning,
-        volumeBalanceSummary: volumeBalanceSummary,
-        nextMonthGoals: nextMonthGoals.isNotEmpty
-            ? nextMonthGoals
-            : ['全種目の過負荷達成率 70% 以上をキープする'],
-        isGeminiGenerated: true,
-      );
-    } catch (e, stack) {
-      debugPrint('GeminiOverloadCoachService error: $e\n$stack');
-      return null;
+        final rankGrade = (jsonMap['rankGrade'] as String?)?.trim() ?? 'A';
+        final gradeTitle =
+            (jsonMap['gradeTitle'] as String?)?.trim() ?? '過負荷の達成';
+        final scoreSummary = (jsonMap['scoreSummary'] as String?)?.trim() ?? '';
+        final strengthSummary =
+            (jsonMap['strengthSummary'] as String?)?.trim() ?? '';
+        final plateauWarning = (jsonMap['plateauWarning'] as String?)?.trim();
+        final volumeBalanceSummary =
+            (jsonMap['volumeBalanceSummary'] as String?)?.trim() ?? '';
+        final rawGoals = jsonMap['nextMonthGoals'] as List<dynamic>? ?? [];
+        final nextMonthGoals = rawGoals
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+
+        return AiOverloadReport(
+          rankGrade: rankGrade,
+          gradeTitle: gradeTitle,
+          scoreSummary: scoreSummary,
+          strengthSummary: strengthSummary,
+          plateauWarning:
+              plateauWarning?.isEmpty == true ? null : plateauWarning,
+          volumeBalanceSummary: volumeBalanceSummary,
+          nextMonthGoals: nextMonthGoals.isNotEmpty
+              ? nextMonthGoals
+              : ['全種目の過負荷達成率 70% 以上をキープする'],
+          isGeminiGenerated: true,
+        );
+      } catch (e) {
+        debugPrint('GeminiOverloadCoachService ($modelName) failed: $e');
+        // 次のモデル候補を試行
+        continue;
+      }
     }
+
+    return null;
   }
 
   static String _buildAnalysisPrompt(MonthOverloadAnalysis analysis) {
