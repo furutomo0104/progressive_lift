@@ -6,6 +6,8 @@ workflows:
     integrations:
       app_store_connect: Codemagic
     environment:
+      groups:
+        - gemini_credentials
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -24,7 +26,8 @@ workflows:
       - name: Build IPA
         script: |
           flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+            --export-options-plist=/Users/builder/export_options.plist \
+            --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
