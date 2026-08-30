@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/domain/models/month_overload_analysis.dart';
 import 'package:progressive_lift/domain/services/ai_overload_coach_service.dart';
+import 'package:progressive_lift/features/paywall/presentation/paywall_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 import 'package:progressive_lift/shared/widgets/muscle_group_chip.dart';
 
@@ -63,30 +64,36 @@ class _MonthOverloadAnalysisSheet extends ConsumerWidget {
             );
           }
 
+          final isPro =
+              ref.watch(proSubscriptionNotifierProvider).valueOrNull ?? false;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _HeaderScoreCard(analysis: analysis),
+                _HeaderScoreCard(analysis: analysis, isPro: isPro),
                 const SizedBox(height: 16),
-                aiReportAsync.when(
-                  data: (report) => _AiCoachCard(report: report),
-                  loading: () => const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                if (isPro)
+                  aiReportAsync.when(
+                    data: (report) => _AiCoachCard(report: report),
+                    loading: () => const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       ),
                     ),
-                  ),
-                  error: (e, _) => const SizedBox.shrink(),
-                ),
+                    error: (e, _) => const SizedBox.shrink(),
+                  )
+                else
+                  _AiCoachLockedCard(monthLabel: monthLabel),
                 const SizedBox(height: 20),
-                _RankingSection(analysis: analysis),
+                _RankingSection(analysis: analysis, isPro: isPro),
                 if (analysis.exerciseDetails.length >= 2) ...[
                   const SizedBox(height: 20),
-                  _OneRmComparisonSection(analysis: analysis),
+                  _OneRmComparisonSection(analysis: analysis, isPro: isPro),
                 ],
                 const SizedBox(height: 20),
                 _VolumeBalanceSection(analysis: analysis),
@@ -102,9 +109,13 @@ class _MonthOverloadAnalysisSheet extends ConsumerWidget {
 }
 
 class _HeaderScoreCard extends StatelessWidget {
-  const _HeaderScoreCard({required this.analysis});
+  const _HeaderScoreCard({
+    required this.analysis,
+    required this.isPro,
+  });
 
   final MonthOverloadAnalysis analysis;
+  final bool isPro;
 
   @override
   Widget build(BuildContext context) {
@@ -222,6 +233,126 @@ class _HeaderScoreCard extends StatelessWidget {
                   color: Colors.lightBlueAccent,
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AiCoachLockedCard extends StatelessWidget {
+  const _AiCoachLockedCard({required this.monthLabel});
+
+  final String monthLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.amber.withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF231E12),
+              Color(0xFF1A1D26),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.amber,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'AI Overload Coach 分析',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock, size: 12, color: Colors.amber),
+                      SizedBox(width: 3),
+                      Text(
+                        'PRO限定',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Gemini 1.5 Flash が $monthLabel の成長要因と課題を徹底分析',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '・最も成長した種目の分析＆意義\n・停滞種目のプラトー打破アドバイス\n・来月狙うべき具体的な重量・回数目標',
+              style: TextStyle(fontSize: 12, color: Colors.white60, height: 1.5),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              onPressed: () {
+                showPaywallSheet(
+                  context,
+                  featureTriggerTitle: 'AI Overload Coach 詳細分析',
+                );
+              },
+              icon: const Icon(Icons.workspace_premium, size: 18),
+              label: const Text(
+                'PROでAI詳細分析と次月目標を解放',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ],
         ),
@@ -514,17 +645,25 @@ class _CoachSectionBlock extends StatelessWidget {
 }
 
 class _RankingSection extends HookWidget {
-  const _RankingSection({required this.analysis});
+  const _RankingSection({
+    required this.analysis,
+    required this.isPro,
+  });
 
   final MonthOverloadAnalysis analysis;
+  final bool isPro;
 
   @override
   Widget build(BuildContext context) {
     final showAll = useState(false);
     final totalCount = analysis.exerciseDetails.length;
-    final displayItems = showAll.value
-        ? analysis.exerciseDetails
-        : analysis.exerciseDetails.take(5).toList();
+
+    // 無料版は上位3種目に制限、Pro版は全種目（初期5件＋折りたたみ）
+    final displayItems = isPro
+        ? (showAll.value
+            ? analysis.exerciseDetails
+            : analysis.exerciseDetails.take(5).toList())
+        : analysis.exerciseDetails.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,7 +681,7 @@ class _RankingSection extends HookWidget {
                 ),
               ],
             ),
-            if (totalCount > 5)
+            if (isPro && totalCount > 5)
               Text(
                 '全 $totalCount 種目',
                 style: const TextStyle(fontSize: 12, color: Colors.white54),
@@ -555,13 +694,57 @@ class _RankingSection extends HookWidget {
             rank: i + 1,
             detail: displayItems[i],
           ),
-        if (totalCount > 5) ...[
+        if (!isPro && totalCount > 3) ...[
+          const SizedBox(height: 4),
+          Card(
+            color: const Color(0xFF1E222D),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock, size: 18, color: Colors.amber),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '他 ${totalCount - 3} 種目の成長ランキングはPRO限定',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      showPaywallSheet(
+                        context,
+                        featureTriggerTitle: '全種目成長ランキング',
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.amber,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    child: const Text(
+                      '解放する',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ] else if (isPro && totalCount > 5) ...[
           const SizedBox(height: 4),
           Center(
             child: TextButton.icon(
               onPressed: () => showAll.value = !showAll.value,
               icon: Icon(
-                showAll.value ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                showAll.value
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
                 size: 18,
                 color: Colors.amber,
               ),
@@ -749,15 +932,19 @@ class _ExerciseRankCard extends StatelessWidget {
 }
 
 class _OneRmComparisonSection extends StatelessWidget {
-  const _OneRmComparisonSection({required this.analysis});
+  const _OneRmComparisonSection({
+    required this.analysis,
+    required this.isPro,
+  });
 
   final MonthOverloadAnalysis analysis;
+  final bool isPro;
 
   @override
   Widget build(BuildContext context) {
     // 実施回数が複数回の種目をピックアップ
     final multies =
-        analysis.exerciseDetails.where((d) => d.sessionCountInMonth >= 2).take(4).toList();
+        analysis.exerciseDetails.where((d) => d.sessionCountInMonth >= 2).take(isPro ? 6 : 2).toList();
 
     if (multies.isEmpty) return const SizedBox.shrink();
 
@@ -791,6 +978,53 @@ class _OneRmComparisonSection extends StatelessWidget {
                     child: _OneRmBarRow(
                       item: item,
                       maxSectionOneRm: maxOneRm > 0 ? maxOneRm : 100.0,
+                    ),
+                  ),
+                if (!isPro)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.amber.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lock, size: 14, color: Colors.amber),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            '全主要種目の1RM成長比較はPRO限定',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.amber,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            showPaywallSheet(
+                              context,
+                              featureTriggerTitle: '1RM成長比較',
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.amber,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: const Text(
+                            '解放',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],

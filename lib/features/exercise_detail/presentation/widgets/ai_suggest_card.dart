@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:progressive_lift/features/paywall/presentation/paywall_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
 class AiSuggestCard extends ConsumerWidget {
@@ -9,7 +10,7 @@ class AiSuggestCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPremium = ref.watch(premiumToggleProvider);
+    final isPro = ref.watch(proSubscriptionNotifierProvider).valueOrNull ?? false;
     final suggestionAsync = ref.watch(aiSuggestionProvider(exerciseKey));
 
     return Card(
@@ -22,27 +23,30 @@ class AiSuggestCard extends ConsumerWidget {
               children: [
                 Icon(
                   Icons.auto_awesome,
-                  color: isPremium ? Colors.amber : Colors.white38,
+                  color: isPro ? Colors.amber : Colors.white38,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'AIサジェスト',
+                  'AI 今日の推奨セット',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
-                if (!isPremium)
+                if (!isPro)
                   TextButton(
-                    onPressed: () => ref.read(premiumToggleProvider.notifier).toggle(),
-                    child: const Text('プレミアムを試す'),
+                    onPressed: () => showPaywallSheet(
+                      context,
+                      featureTriggerTitle: 'AI 推奨セット',
+                    ),
+                    child: const Text('PROで解放'),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             suggestionAsync.when(
               data: (text) {
-                if (!isPremium) {
+                if (!isPro) {
                   return Text(
-                    'プレミアムプランで、過去のトップセット傾きから今日の推奨重量・回数をAIが提案します。',
+                    'PROプラン（¥380/月）で、過去のトップセット推移から今日の推奨重量・回数をAIが自動提案します。',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white60,
                         ),

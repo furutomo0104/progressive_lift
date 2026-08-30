@@ -34,23 +34,30 @@ Future<WorkoutRepository> workoutRepository(WorkoutRepositoryRef ref) async {
 
 @Riverpod(keepAlive: true)
 SubscriptionService subscriptionService(SubscriptionServiceRef ref) {
-  return SubscriptionService();
-}
-
-@Riverpod(keepAlive: true)
-AiSuggestService aiSuggestService(AiSuggestServiceRef ref) {
-  return AiSuggestService(ref.watch(subscriptionServiceProvider));
+  return SubscriptionService.instance;
 }
 
 @riverpod
-class PremiumToggle extends _$PremiumToggle {
+class ProSubscriptionNotifier extends _$ProSubscriptionNotifier {
   @override
-  bool build() => ref.watch(subscriptionServiceProvider).isPremium;
+  Future<bool> build() async {
+    final service = ref.watch(subscriptionServiceProvider);
+    return service.isProUser();
+  }
 
-  Future<void> toggle() async {
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final service = ref.read(subscriptionServiceProvider);
+      return service.isProUser();
+    });
+  }
+
+  Future<void> toggleMock() async {
+    final current = state.valueOrNull ?? false;
     final service = ref.read(subscriptionServiceProvider);
-    await service.setPremium(!service.isPremium);
-    ref.invalidateSelf();
+    service.setMockPro(!current);
+    state = AsyncValue.data(!current);
   }
 }
 
@@ -63,8 +70,10 @@ Future<List<TopSetPoint>> topSetSeries(TopSetSeriesRef ref, String exerciseKey) 
 
 @riverpod
 Future<String?> aiSuggestion(AiSuggestionRef ref, String exerciseKey) async {
+  final isPro = await ref.watch(proSubscriptionNotifierProvider.future);
+  if (!isPro) return null;
   final series = await ref.watch(topSetSeriesProvider(exerciseKey).future);
-  final ai = ref.watch(aiSuggestServiceProvider);
+  final ai = AiSuggestService();
   return ai.suggestToday(history: series);
 }
 

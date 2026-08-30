@@ -1,19 +1,13 @@
 import 'package:progressive_lift/domain/models/top_set_point.dart';
-import 'package:progressive_lift/domain/services/subscription_service.dart';
 import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 
-/// 将来のAIサジェスト機能スタブ（プレミアム限定）
+/// 将来のAIサジェスト機能スタブ
 class AiSuggestService {
-  AiSuggestService(this._subscription);
-
-  final SubscriptionService _subscription;
+  AiSuggestService();
 
   Future<String?> suggestToday({
     required List<TopSetPoint> history,
   }) async {
-    if (!_subscription.canUseAiSuggest()) {
-      return null;
-    }
     if (history.length < 2) {
       return 'データが増えると、AIが最適な重量・回数を提案します。';
     }

@@ -36,7 +36,7 @@ final workoutRepositoryProvider = FutureProvider<WorkoutRepository>.internal(
 
 typedef WorkoutRepositoryRef = FutureProviderRef<WorkoutRepository>;
 String _$subscriptionServiceHash() =>
-    r'04e393852f53529a6a74b8e40eda96b12973375e';
+    r'eb454343315410e0f303576b13ec990625de2a05';
 
 /// See also [subscriptionService].
 @ProviderFor(subscriptionService)
@@ -51,21 +51,6 @@ final subscriptionServiceProvider = Provider<SubscriptionService>.internal(
 );
 
 typedef SubscriptionServiceRef = ProviderRef<SubscriptionService>;
-String _$aiSuggestServiceHash() => r'934f03f0edba6af1cd18b5ee8d11cc5bf24237c3';
-
-/// See also [aiSuggestService].
-@ProviderFor(aiSuggestService)
-final aiSuggestServiceProvider = Provider<AiSuggestService>.internal(
-  aiSuggestService,
-  name: r'aiSuggestServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$aiSuggestServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef AiSuggestServiceRef = ProviderRef<AiSuggestService>;
 String _$topSetSeriesHash() => r'd52b887e7bd88927a62d68766a93e3436d907fdd';
 
 /// Copied from Dart SDK
@@ -217,7 +202,7 @@ class _TopSetSeriesProviderElement
   String get exerciseKey => (origin as TopSetSeriesProvider).exerciseKey;
 }
 
-String _$aiSuggestionHash() => r'2a0199c4c96abebae87cf092a5155c957364f55d';
+String _$aiSuggestionHash() => r'294ef9a7ddea698b6af4d24b96372afdaf636014';
 
 /// See also [aiSuggestion].
 @ProviderFor(aiSuggestion)
@@ -917,7 +902,7 @@ class _MonthOverloadAnalysisProviderElement
       (origin as MonthOverloadAnalysisProvider).monthAnchor;
 }
 
-String _$aiOverloadReportHash() => r'4511560426393d1b48bc2dd7193a3985e49382c5';
+String _$aiOverloadReportHash() => r'69d48441b83fc0d9ec2da708648857f3e8faeedd';
 
 /// See also [aiOverloadReport].
 @ProviderFor(aiOverloadReport)
@@ -1198,22 +1183,23 @@ class _ExerciseHistoryProviderElement
   String get exerciseKey => (origin as ExerciseHistoryProvider).exerciseKey;
 }
 
-String _$premiumToggleHash() => r'9ca71e85f74a82787014eadfaa87a718e2df0265';
+String _$proSubscriptionNotifierHash() =>
+    r'd95d6d5a4fb19534b181fda457106a8a5c80949c';
 
-/// See also [PremiumToggle].
-@ProviderFor(PremiumToggle)
-final premiumToggleProvider =
-    AutoDisposeNotifierProvider<PremiumToggle, bool>.internal(
-  PremiumToggle.new,
-  name: r'premiumToggleProvider',
+/// See also [ProSubscriptionNotifier].
+@ProviderFor(ProSubscriptionNotifier)
+final proSubscriptionNotifierProvider =
+    AutoDisposeAsyncNotifierProvider<ProSubscriptionNotifier, bool>.internal(
+  ProSubscriptionNotifier.new,
+  name: r'proSubscriptionNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$premiumToggleHash,
+      : _$proSubscriptionNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$PremiumToggle = AutoDisposeNotifier<bool>;
+typedef _$ProSubscriptionNotifier = AutoDisposeAsyncNotifier<bool>;
 String _$exerciseCatalogTickHash() =>
     r'c92053733795881eab560ffd9319e9b7d91b9bb8';
 
