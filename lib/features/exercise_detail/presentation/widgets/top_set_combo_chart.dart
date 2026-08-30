@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 
-/// Case 1: トップセット特化型複合グラフ
-/// - 左Y軸: 最高重量（折れ線）
-/// - 右Y軸: Reps（棒）
-///
-/// BarChart + LineChart の Stack は横軸スケールが一致しないため、
-/// 単一 LineChart 上で棒を太い縦線として描画する。
+/// トップセット特化型複合グラフ
+/// - 左Y軸: 最高重量（折れ線 / 紫）
+/// - 右Y軸: 回数（棒 / 水色）
 class TopSetComboChart extends StatelessWidget {
   const TopSetComboChart({
     super.key,
@@ -19,9 +16,12 @@ class TopSetComboChart extends StatelessWidget {
   final List<TopSetPoint> points;
   final double height;
 
-  static const _leftAxisReserved = 40.0;
-  static const _rightAxisReserved = 36.0;
+  static const _leftAxisReserved = 46.0;
+  static const _rightAxisReserved = 42.0;
   static const _bottomAxisReserved = 28.0;
+
+  static const _weightColor = Color(0xFF7986CB);
+  static const _repsColor = Color(0xFF4FC3F7);
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +41,23 @@ class TopSetComboChart extends StatelessWidget {
     final minR = reps.reduce((a, b) => a < b ? a : b);
     final maxR = reps.reduce((a, b) => a > b ? a : b);
 
-    final weightPad = ((maxW - minW) * 0.15).clamp(2.5, 10.0);
+    final weightDiff = maxW - minW;
+    final weightPad = weightDiff > 0
+        ? (weightDiff * 0.15).clamp(2.5, 10.0)
+        : (maxW > 0 ? maxW * 0.15 : 5.0).clamp(2.5, 10.0);
     const repsPad = 1.0;
-    final minWeightAxis = (minW - weightPad).floorToDouble();
-    final maxWeightAxis = (maxW + weightPad).ceilToDouble();
-    final minRepsAxis = (minR - repsPad).clamp(0, 20).floorToDouble();
-    final maxRepsAxis = (maxR + repsPad + 1).ceilToDouble();
+
+    final minWeightAxis = (minW - weightPad).clamp(0.0, double.infinity).floorToDouble();
+    var maxWeightAxis = (maxW + weightPad).ceilToDouble();
+    if (maxWeightAxis <= minWeightAxis) {
+      maxWeightAxis = minWeightAxis + 10.0;
+    }
+
+    final minRepsAxis = (minR - repsPad).clamp(0.0, 20.0).floorToDouble();
+    var maxRepsAxis = (maxR + repsPad + 1).ceilToDouble();
+    if (maxRepsAxis <= minRepsAxis) {
+      maxRepsAxis = minRepsAxis + 5.0;
+    }
 
     double mapReps(double r) {
       final rangeW = maxWeightAxis - minWeightAxis;
@@ -69,7 +80,7 @@ class TopSetComboChart extends StatelessWidget {
             FlSpot(x, mapReps(p.reps.toDouble())),
           ],
           isCurved: false,
-          color: const Color(0xFF4FC3F7).withValues(alpha: 0.75),
+          color: _repsColor.withValues(alpha: 0.75),
           barWidth: 14,
           isStrokeCapRound: false,
           dotData: const FlDotData(show: false),
@@ -85,6 +96,60 @@ class TopSetComboChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // 軸ヘッダー（左: 重量 / 右: 回数）
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 14,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: _weightColor,
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    '重量 (kg)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _weightColor,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '回数 (reps)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _repsColor,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 8,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _repsColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
         SizedBox(
           height: height,
           child: LineChart(
@@ -117,21 +182,21 @@ class TopSetComboChart extends StatelessWidget {
                 LineChartBarData(
                   spots: lineSpots,
                   isCurved: false,
-                  color: const Color(0xFF7986CB),
+                  color: _weightColor,
                   barWidth: 3,
                   dotData: FlDotData(
                     show: true,
                     getDotPainter: (spot, percent, bar, index) =>
                         FlDotCirclePainter(
                       radius: 4,
-                      color: const Color(0xFF7986CB),
+                      color: _weightColor,
                       strokeWidth: 2,
                       strokeColor: Colors.white,
                     ),
                   ),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: const Color(0xFF7986CB).withValues(alpha: 0.12),
+                    color: _weightColor.withValues(alpha: 0.12),
                   ),
                 ),
               ],
@@ -143,7 +208,8 @@ class TopSetComboChart extends StatelessWidget {
                     if (i < 0 || i >= points.length) return null;
                     final p = points[i];
                     return LineTooltipItem(
-                      '${p.weightKg}kg / ${p.reps}reps',
+                      '最高重量: ${p.weightKg}kg\n'
+                      '回数: ${p.reps} reps',
                       const TextStyle(color: Colors.white, fontSize: 12),
                     );
                   }).toList(),
@@ -156,12 +222,17 @@ class TopSetComboChart extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _LegendDot(
-              color: const Color(0xFF7986CB),
-              label: 'Max Weight (kg)',
+            _LegendItem(
+              color: _weightColor,
+              label: '折れ線：最高重量 (kg)',
+              isLine: true,
             ),
-            const SizedBox(width: 16),
-            _LegendDot(color: const Color(0xFF4FC3F7), label: 'Reps'),
+            const SizedBox(width: 18),
+            _LegendItem(
+              color: _repsColor,
+              label: '棒：回数 (reps)',
+              isLine: false,
+            ),
           ],
         ),
       ],
@@ -193,8 +264,8 @@ class TopSetComboChart extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Text(
-              repValue.round().toString(),
-              style: const TextStyle(fontSize: 10, color: Color(0xFF4FC3F7)),
+              '${repValue.round()}回',
+              style: const TextStyle(fontSize: 10, color: _repsColor),
             );
           },
         ),
@@ -209,7 +280,7 @@ class TopSetComboChart extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Text(
-              value.toStringAsFixed(value % 1 == 0 ? 0 : 1),
+              '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}kg',
               style: const TextStyle(fontSize: 10, color: Colors.white70),
             );
           },
@@ -237,26 +308,44 @@ class TopSetComboChart extends StatelessWidget {
   }
 }
 
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.color, required this.label});
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    required this.isLine,
+  });
 
   final Color color;
   final String label;
+  final bool isLine;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
+        if (isLine)
+          Container(
+            width: 14,
+            height: 3,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          )
+        else
+          Container(
+            width: 8,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Colors.white60),
+          style: const TextStyle(fontSize: 11, color: Colors.white70),
         ),
       ],
     );

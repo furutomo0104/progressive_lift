@@ -25,9 +25,15 @@ class VolumeTrendChart extends StatelessWidget {
     final values = points.map((p) => p.totalVolumeKg).toList();
     final minV = values.reduce((a, b) => a < b ? a : b);
     final maxV = values.reduce((a, b) => a > b ? a : b);
-    final pad = ((maxV - minV) * 0.15).clamp(100, maxV * 0.2);
-    final minY = (minV - pad).clamp(0, double.infinity).floorToDouble();
-    final maxY = (maxV + pad).ceilToDouble();
+    final diff = maxV - minV;
+    final pad = diff > 0
+        ? (diff * 0.15).clamp(10.0, 1000.0)
+        : (maxV > 0 ? maxV * 0.15 : 20.0).clamp(10.0, 1000.0);
+    final minY = (minV - pad).clamp(0.0, double.infinity).floorToDouble();
+    var maxY = (maxV + pad).ceilToDouble();
+    if (maxY <= minY) {
+      maxY = minY + 20.0;
+    }
     final dateFmt = DateFormat('M/d');
 
     final spots = [
@@ -62,7 +68,7 @@ class VolumeTrendChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 44,
+                reservedSize: 46,
                 getTitlesWidget: (value, meta) {
                   if (value >= 1000) {
                     final k = value / 1000;
@@ -81,7 +87,7 @@ class VolumeTrendChart extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
                   return Text(
-                    value.toStringAsFixed(0),
+                    '${value.toStringAsFixed(0)}kg',
                     style: const TextStyle(
                       fontSize: 10,
                       color: Colors.white70,
@@ -133,7 +139,7 @@ class VolumeTrendChart extends StatelessWidget {
                 if (i < 0 || i >= points.length) return null;
                 final p = points[i];
                 return LineTooltipItem(
-                  '${_formatVolume(p.totalVolumeKg)}\n'
+                  '総ボリューム: ${_formatVolume(p.totalVolumeKg)}\n'
                   '${p.totalSets}セット · ${p.totalReps}reps',
                   const TextStyle(color: Colors.white, fontSize: 12),
                 );

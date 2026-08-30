@@ -11,6 +11,7 @@ import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/ai_overload_coach_service.dart';
 import 'package:progressive_lift/domain/services/ai_suggest_service.dart';
+import 'package:progressive_lift/domain/services/gemini_overload_coach_service.dart';
 import 'package:progressive_lift/domain/services/subscription_service.dart';
 
 part 'app_providers.g.dart';
@@ -147,6 +148,20 @@ Future<AiOverloadReport> aiOverloadReport(
   DateTime monthAnchor,
 ) async {
   final analysis = await ref.watch(monthOverloadAnalysisProvider(monthAnchor).future);
+  if (!analysis.hasData) {
+    return AiOverloadCoachService.generateReport(analysis);
+  }
+
+  // 1. Gemini API Key が設定されている場合は Gemini 1.5 Flash を呼び出し
+  if (GeminiOverloadCoachService.hasApiKey) {
+    final geminiReport =
+        await GeminiOverloadCoachService.generateGeminiReport(analysis);
+    if (geminiReport != null) {
+      return geminiReport;
+    }
+  }
+
+  // 2. APIキー未設定時または通信エラー時は高精度ルールベースにフォールバック
   return AiOverloadCoachService.generateReport(analysis);
 }
 

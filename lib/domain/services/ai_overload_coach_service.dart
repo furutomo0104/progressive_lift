@@ -10,6 +10,7 @@ class AiOverloadReport {
     required this.plateauWarning,
     required this.volumeBalanceSummary,
     required this.nextMonthGoals,
+    this.isGeminiGenerated = false,
   });
 
   final String rankGrade;
@@ -19,6 +20,7 @@ class AiOverloadReport {
   final String? plateauWarning;
   final String volumeBalanceSummary;
   final List<String> nextMonthGoals;
+  final bool isGeminiGenerated;
 }
 
 class AiOverloadCoachService {
