@@ -165,7 +165,7 @@ class _PaywallSheet extends HookConsumerWidget {
                     icon: Icons.auto_awesome,
                     color: Colors.amber,
                     title: 'AI Overload Coach による無制限月間詳細分析',
-                    subtitle: 'Gemini 1.5 Flash が成長要因・プラトー打破・具体的目標を分析',
+                    subtitle: 'AIが成長要因・プラトー打破・具体的目標を分析',
                   ),
                   Divider(color: Colors.white10, height: 20),
                   _FeatureRow(

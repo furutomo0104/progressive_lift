@@ -287,7 +287,7 @@ class CalendarScreen extends HookConsumerWidget {
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'データは安全に保管されています。\nPROプランに加入すると、3ヶ月以上前のすべての過去データと詳細分析が解放されます。',
+                                'PROプランに加入すると、3ヶ月以上前のすべての過去データと詳細分析が解放されます。',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 12,

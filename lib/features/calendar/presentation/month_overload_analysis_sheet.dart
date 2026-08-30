@@ -321,7 +321,7 @@ class _AiCoachLockedCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Gemini 1.5 Flash が $monthLabel の成長要因と課題を徹底分析',
+              'AIが $monthLabel の成長要因と課題を徹底分析',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -484,7 +484,7 @@ class _AiCoachCard extends StatelessWidget {
                             ),
                           ),
                           child: const Text(
-                            'Gemini',
+                            'AI',
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
