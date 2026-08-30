@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
 import 'package:progressive_lift/features/calendar/presentation/day_workout_sheet.dart';
@@ -25,6 +26,90 @@ class CalendarScreen extends HookConsumerWidget {
       data: (m) => m,
       orElse: () => <DateTime, DayWorkoutSummary>{},
     );
+
+    Future<void> pickMonth() async {
+      final now = focusedDay.value;
+      var tempYear = now.year;
+      var tempMonth = now.month;
+
+      final picked = await showDialog<DateTime>(
+        context: context,
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              return AlertDialog(
+                title: const Text('年月を選択'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: tempYear > 2020
+                              ? () => setModalState(() => tempYear--)
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            '$tempYear年',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: tempYear < 2030
+                              ? () => setModalState(() => tempYear++)
+                              : null,
+                          icon: const Icon(Icons.chevron_right),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(12, (index) {
+                        final m = index + 1;
+                        final isSelected = m == tempMonth;
+                        return ChoiceChip(
+                          label: Text('$m月'),
+                          selected: isSelected,
+                          onSelected: (_) {
+                            setModalState(() => tempMonth = m);
+                          },
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('キャンセル'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(
+                      ctx,
+                      DateTime.utc(tempYear, tempMonth, 1),
+                    ),
+                    child: const Text('決定'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      if (picked != null) {
+        focusedDay.value = picked;
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -74,6 +159,39 @@ class CalendarScreen extends HookConsumerWidget {
               titleCentered: true,
             ),
             calendarBuilders: CalendarBuilders(
+              headerTitleBuilder: (context, day) {
+                final text = '${day.year}年${day.month}月';
+                return Center(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: pickMonth,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            text,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.arrow_drop_down,
+                            size: 20,
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
               defaultBuilder: (context, day, _) =>
                   _buildCell(day, summaries),
               todayBuilder: (context, day, _) => _buildCell(

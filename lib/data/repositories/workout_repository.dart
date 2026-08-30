@@ -11,10 +11,13 @@ import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/data/models/workout_session.dart';
 import 'package:progressive_lift/domain/models/exercise_list_item.dart';
+import 'package:progressive_lift/domain/models/month_overload_analysis.dart';
 import 'package:progressive_lift/domain/models/month_workout_analysis.dart';
 import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
+import 'package:progressive_lift/domain/services/one_rm_calculator.dart';
 import 'package:progressive_lift/domain/services/top_set_extractor.dart';
+import 'package:progressive_lift/domain/services/volume_calculator.dart';
 
 class DayWorkoutSummary {
   DayWorkoutSummary({
@@ -107,6 +110,156 @@ class WorkoutRepository {
       cardioCount: cardioStats.count,
       cardioTotalMinutes: cardioStats.totalMinutes,
     );
+  }
+
+  Future<MonthOverloadAnalysis> getMonthOverloadAnalysis(DateTime month) async {
+    final anchor = DateTime(month.year, month.month, 1);
+    final prevAnchor = DateTime(month.year, month.month - 1, 1);
+
+    final basic = await _computeMonthBasicStats(anchor);
+    final exerciseKeys = await _exerciseKeysInMonth(anchor);
+
+    final totalVolume = await _computeMonthTotalVolume(anchor);
+    final prevVolume = await _computeMonthTotalVolume(prevAnchor);
+
+    final details = <ExerciseOverloadDetail>[];
+    var totalPrCount = 0;
+    var overloadedCount = 0;
+
+    for (final key in exerciseKeys) {
+      final series = await getTopSetSeries(key);
+      if (series.isEmpty) continue;
+
+      final pointsInMonth =
+          series.where((p) => _isInMonth(p.date, anchor)).toList();
+      if (pointsInMonth.isEmpty) continue;
+
+      final pointsBeforeMonth =
+          series.where((p) => p.date.isBefore(anchor)).toList();
+
+      final baselineTop = pointsBeforeMonth.isNotEmpty
+          ? pointsBeforeMonth.last
+          : pointsInMonth.first;
+
+      // 月内での最高TOP (1RM基準)
+      var bestMonthTop = pointsInMonth.first;
+      var best1Rm = OneRmCalculator.epley(
+        bestMonthTop.weightKg,
+        bestMonthTop.reps,
+      );
+
+      for (final p in pointsInMonth) {
+        final e1rm = OneRmCalculator.epley(p.weightKg, p.reps);
+        if (e1rm > best1Rm) {
+          best1Rm = e1rm;
+          bestMonthTop = p;
+        }
+      }
+
+      final latestMonthTop = pointsInMonth.last;
+      final initial1Rm = OneRmCalculator.epley(
+        baselineTop.weightKg,
+        baselineTop.reps,
+      );
+
+      // PR判定
+      var isOverloaded = false;
+      for (var i = 0; i < series.length; i++) {
+        final p = series[i];
+        if (!_isInMonth(p.date, anchor)) continue;
+        final prev = _previousTopSet(series, i);
+        if (prev != null && _isImprovement(prev, p)) {
+          totalPrCount++;
+          isOverloaded = true;
+        }
+      }
+
+      if (!isOverloaded && best1Rm > initial1Rm + 0.1) {
+        isOverloaded = true;
+      }
+
+      if (isOverloaded) {
+        overloadedCount++;
+      }
+
+      final isPlateau = pointsInMonth.length >= 2 && !isOverloaded;
+      final name = await resolveExerciseName(key);
+      final muscle = await _resolveExerciseMuscleGroup(key);
+
+      details.add(
+        ExerciseOverloadDetail(
+          exerciseKey: key,
+          exerciseName: name,
+          muscleGroup: muscle,
+          baselineTop: baselineTop,
+          bestMonthTop: bestMonthTop,
+          latestMonthTop: latestMonthTop,
+          initialOneRm: initial1Rm,
+          bestOneRm: best1Rm,
+          sessionCountInMonth: pointsInMonth.length,
+          isOverloaded: isOverloaded,
+          isPlateau: isPlateau,
+        ),
+      );
+    }
+
+    // 伸び率の高い順にソート
+    details.sort((a, b) {
+      final cmp = b.oneRmGainPercent.compareTo(a.oneRmGainPercent);
+      if (cmp != 0) return cmp;
+      return b.oneRmDelta.compareTo(a.oneRmDelta);
+    });
+
+    final plateaus = details.where((d) => d.isPlateau).toList();
+
+    return MonthOverloadAnalysis(
+      month: anchor,
+      totalExercisesTracked: details.length,
+      overloadedExercisesCount: overloadedCount,
+      totalPrEventsCount: totalPrCount,
+      exerciseDetails: details,
+      plateauExercises: plateaus,
+      muscleGroupSetCounts: basic.muscleGroupSetCounts,
+      totalVolumeKg: totalVolume,
+      previousMonthVolumeKg: prevVolume > 0 ? prevVolume : null,
+    );
+  }
+
+  Future<double> _computeMonthTotalVolume(DateTime monthStart) async {
+    final start = monthStart;
+    final end = DateTime(monthStart.year, monthStart.month + 1, 0, 23, 59, 59);
+    final sessions = await _isar.workoutSessions
+        .where()
+        .dateBetween(start, end)
+        .findAll();
+
+    var totalVol = 0.0;
+    for (final s in sessions) {
+      final exercises = await getExercisesForSession(s.id);
+      for (final ex in exercises) {
+        final sets = await getSetsForExercise(ex.id);
+        for (final set in sets) {
+          totalVol += VolumeCalculator.setVolume(set);
+        }
+      }
+    }
+    return totalVol;
+  }
+
+  Future<MuscleGroup> _resolveExerciseMuscleGroup(String key) async {
+    final pref = await getPreferenceForKey(key);
+    if (pref != null && pref.hasMuscleGroupOverride) {
+      return pref.muscleGroupOverride;
+    }
+    final custom = await _isar.customExerciseTemplates
+        .where()
+        .exerciseKeyEqualTo(key)
+        .findFirst();
+    if (custom != null) {
+      return custom.muscleGroup.displayGroup;
+    }
+    final preset = ExerciseCatalog.findByKey(key);
+    return preset?.muscleGroup ?? MuscleGroup.chest;
   }
 
   Future<({int count, int totalMinutes})> _computeMonthCardioStats(
@@ -274,11 +427,13 @@ class WorkoutRepository {
     return session;
   }
 
-  Future<List<ExerciseRecord>> getExercisesForSession(int sessionId) {
-    return _isar.exerciseRecords
+  Future<List<ExerciseRecord>> getExercisesForSession(int sessionId) async {
+    final records = await _isar.exerciseRecords
         .where()
         .sessionIdEqualTo(sessionId)
         .findAll();
+    records.sort((a, b) => a.id.compareTo(b.id));
+    return records;
   }
 
   Future<List<ExerciseSet>> getSetsForExercise(int exerciseRecordId) {

@@ -5,9 +5,11 @@ import 'package:progressive_lift/data/local/isar_service.dart';
 import 'package:progressive_lift/data/local/seed_data.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
 import 'package:progressive_lift/domain/models/exercise_list_item.dart';
+import 'package:progressive_lift/domain/models/month_overload_analysis.dart';
 import 'package:progressive_lift/domain/models/month_workout_analysis.dart';
 import 'package:progressive_lift/domain/models/selectable_exercise.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
+import 'package:progressive_lift/domain/services/ai_overload_coach_service.dart';
 import 'package:progressive_lift/domain/services/ai_suggest_service.dart';
 import 'package:progressive_lift/domain/services/subscription_service.dart';
 
@@ -127,6 +129,25 @@ Future<MonthWorkoutAnalysis> monthWorkoutAnalysis(
   ref.watch(calendarRefreshTickProvider);
   final repo = await ref.watch(workoutRepositoryProvider.future);
   return repo.getMonthAnalysis(monthAnchor);
+}
+
+@riverpod
+Future<MonthOverloadAnalysis> monthOverloadAnalysis(
+  MonthOverloadAnalysisRef ref,
+  DateTime monthAnchor,
+) async {
+  ref.watch(calendarRefreshTickProvider);
+  final repo = await ref.watch(workoutRepositoryProvider.future);
+  return repo.getMonthOverloadAnalysis(monthAnchor);
+}
+
+@riverpod
+Future<AiOverloadReport> aiOverloadReport(
+  AiOverloadReportRef ref,
+  DateTime monthAnchor,
+) async {
+  final analysis = await ref.watch(monthOverloadAnalysisProvider(monthAnchor).future);
+  return AiOverloadCoachService.generateReport(analysis);
 }
 
 @riverpod

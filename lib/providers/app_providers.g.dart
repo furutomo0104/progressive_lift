@@ -781,6 +781,273 @@ class _MonthWorkoutAnalysisProviderElement
       (origin as MonthWorkoutAnalysisProvider).monthAnchor;
 }
 
+String _$monthOverloadAnalysisHash() =>
+    r'30a41e548faa34863b74dee6d52f07087a17d532';
+
+/// See also [monthOverloadAnalysis].
+@ProviderFor(monthOverloadAnalysis)
+const monthOverloadAnalysisProvider = MonthOverloadAnalysisFamily();
+
+/// See also [monthOverloadAnalysis].
+class MonthOverloadAnalysisFamily
+    extends Family<AsyncValue<MonthOverloadAnalysis>> {
+  /// See also [monthOverloadAnalysis].
+  const MonthOverloadAnalysisFamily();
+
+  /// See also [monthOverloadAnalysis].
+  MonthOverloadAnalysisProvider call(
+    DateTime monthAnchor,
+  ) {
+    return MonthOverloadAnalysisProvider(
+      monthAnchor,
+    );
+  }
+
+  @override
+  MonthOverloadAnalysisProvider getProviderOverride(
+    covariant MonthOverloadAnalysisProvider provider,
+  ) {
+    return call(
+      provider.monthAnchor,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'monthOverloadAnalysisProvider';
+}
+
+/// See also [monthOverloadAnalysis].
+class MonthOverloadAnalysisProvider
+    extends AutoDisposeFutureProvider<MonthOverloadAnalysis> {
+  /// See also [monthOverloadAnalysis].
+  MonthOverloadAnalysisProvider(
+    DateTime monthAnchor,
+  ) : this._internal(
+          (ref) => monthOverloadAnalysis(
+            ref as MonthOverloadAnalysisRef,
+            monthAnchor,
+          ),
+          from: monthOverloadAnalysisProvider,
+          name: r'monthOverloadAnalysisProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$monthOverloadAnalysisHash,
+          dependencies: MonthOverloadAnalysisFamily._dependencies,
+          allTransitiveDependencies:
+              MonthOverloadAnalysisFamily._allTransitiveDependencies,
+          monthAnchor: monthAnchor,
+        );
+
+  MonthOverloadAnalysisProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.monthAnchor,
+  }) : super.internal();
+
+  final DateTime monthAnchor;
+
+  @override
+  Override overrideWith(
+    FutureOr<MonthOverloadAnalysis> Function(MonthOverloadAnalysisRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: MonthOverloadAnalysisProvider._internal(
+        (ref) => create(ref as MonthOverloadAnalysisRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        monthAnchor: monthAnchor,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<MonthOverloadAnalysis> createElement() {
+    return _MonthOverloadAnalysisProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MonthOverloadAnalysisProvider &&
+        other.monthAnchor == monthAnchor;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, monthAnchor.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin MonthOverloadAnalysisRef
+    on AutoDisposeFutureProviderRef<MonthOverloadAnalysis> {
+  /// The parameter `monthAnchor` of this provider.
+  DateTime get monthAnchor;
+}
+
+class _MonthOverloadAnalysisProviderElement
+    extends AutoDisposeFutureProviderElement<MonthOverloadAnalysis>
+    with MonthOverloadAnalysisRef {
+  _MonthOverloadAnalysisProviderElement(super.provider);
+
+  @override
+  DateTime get monthAnchor =>
+      (origin as MonthOverloadAnalysisProvider).monthAnchor;
+}
+
+String _$aiOverloadReportHash() => r'4511560426393d1b48bc2dd7193a3985e49382c5';
+
+/// See also [aiOverloadReport].
+@ProviderFor(aiOverloadReport)
+const aiOverloadReportProvider = AiOverloadReportFamily();
+
+/// See also [aiOverloadReport].
+class AiOverloadReportFamily extends Family<AsyncValue<AiOverloadReport>> {
+  /// See also [aiOverloadReport].
+  const AiOverloadReportFamily();
+
+  /// See also [aiOverloadReport].
+  AiOverloadReportProvider call(
+    DateTime monthAnchor,
+  ) {
+    return AiOverloadReportProvider(
+      monthAnchor,
+    );
+  }
+
+  @override
+  AiOverloadReportProvider getProviderOverride(
+    covariant AiOverloadReportProvider provider,
+  ) {
+    return call(
+      provider.monthAnchor,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'aiOverloadReportProvider';
+}
+
+/// See also [aiOverloadReport].
+class AiOverloadReportProvider
+    extends AutoDisposeFutureProvider<AiOverloadReport> {
+  /// See also [aiOverloadReport].
+  AiOverloadReportProvider(
+    DateTime monthAnchor,
+  ) : this._internal(
+          (ref) => aiOverloadReport(
+            ref as AiOverloadReportRef,
+            monthAnchor,
+          ),
+          from: aiOverloadReportProvider,
+          name: r'aiOverloadReportProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$aiOverloadReportHash,
+          dependencies: AiOverloadReportFamily._dependencies,
+          allTransitiveDependencies:
+              AiOverloadReportFamily._allTransitiveDependencies,
+          monthAnchor: monthAnchor,
+        );
+
+  AiOverloadReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.monthAnchor,
+  }) : super.internal();
+
+  final DateTime monthAnchor;
+
+  @override
+  Override overrideWith(
+    FutureOr<AiOverloadReport> Function(AiOverloadReportRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AiOverloadReportProvider._internal(
+        (ref) => create(ref as AiOverloadReportRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        monthAnchor: monthAnchor,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<AiOverloadReport> createElement() {
+    return _AiOverloadReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AiOverloadReportProvider &&
+        other.monthAnchor == monthAnchor;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, monthAnchor.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin AiOverloadReportRef on AutoDisposeFutureProviderRef<AiOverloadReport> {
+  /// The parameter `monthAnchor` of this provider.
+  DateTime get monthAnchor;
+}
+
+class _AiOverloadReportProviderElement
+    extends AutoDisposeFutureProviderElement<AiOverloadReport>
+    with AiOverloadReportRef {
+  _AiOverloadReportProviderElement(super.provider);
+
+  @override
+  DateTime get monthAnchor => (origin as AiOverloadReportProvider).monthAnchor;
+}
+
 String _$exerciseListItemsHash() => r'3064b342c06b813626155d2a21a2bea1919b544a';
 
 /// See also [exerciseListItems].

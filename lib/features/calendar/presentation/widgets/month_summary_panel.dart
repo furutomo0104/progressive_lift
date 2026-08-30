@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/core/theme/cardio_style.dart';
 import 'package:progressive_lift/domain/models/month_workout_analysis.dart';
+import 'package:progressive_lift/features/calendar/presentation/month_overload_analysis_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
 class MonthSummaryPanel extends ConsumerWidget {
@@ -45,11 +46,43 @@ class _MonthSummaryBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '$monthLabelのサマリー',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '$monthLabelのサマリー',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                if (analysis.hasData)
+                  TextButton.icon(
+                    onPressed: () => showMonthOverloadAnalysisSheet(
+                      context,
+                      month: analysis.month,
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: Colors.amber,
+                    ),
+                    label: const Text(
+                      '詳細分析・AI',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber,
+                      ),
+                    ),
                   ),
+              ],
             ),
             const SizedBox(height: 16),
             if (!analysis.hasData && !analysis.hasCardioData)

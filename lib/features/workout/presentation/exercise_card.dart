@@ -255,7 +255,6 @@ class ExerciseCard extends HookConsumerWidget {
                       controller: memoCtrl,
                       decoration: const InputDecoration(
                         labelText: 'メモ',
-                        hintText: '補助・パーシャル・Failed など',
                         isDense: true,
                       ),
                       textInputAction: TextInputAction.done,
@@ -391,7 +390,6 @@ class _SetRow extends HookConsumerWidget {
               controller: memoCtrl,
               decoration: const InputDecoration(
                 labelText: 'メモ',
-                hintText: '補助・パーシャル・Failed など',
                 isDense: true,
               ),
             ),
