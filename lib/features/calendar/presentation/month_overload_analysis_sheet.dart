@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/domain/models/month_overload_analysis.dart';
 import 'package:progressive_lift/domain/services/ai_overload_coach_service.dart';
@@ -478,32 +478,71 @@ class _CoachSectionBlock extends StatelessWidget {
   }
 }
 
-class _RankingSection extends StatelessWidget {
+class _RankingSection extends HookWidget {
   const _RankingSection({required this.analysis});
 
   final MonthOverloadAnalysis analysis;
 
   @override
   Widget build(BuildContext context) {
+    final showAll = useState(false);
+    final totalCount = analysis.exerciseDetails.length;
+    final displayItems = showAll.value
+        ? analysis.exerciseDetails
+        : analysis.exerciseDetails.take(5).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Icon(Icons.military_tech, color: Colors.amber, size: 20),
-            const SizedBox(width: 8),
-            const Text(
-              '月間 成長・伸び率ランキング',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            const Row(
+              children: [
+                Icon(Icons.military_tech, color: Colors.amber, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  '月間 成長・伸び率ランキング',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
+            if (totalCount > 5)
+              Text(
+                '全 $totalCount 種目',
+                style: const TextStyle(fontSize: 12, color: Colors.white54),
+              ),
           ],
         ),
         const SizedBox(height: 10),
-        for (var i = 0; i < analysis.exerciseDetails.length; i++)
+        for (var i = 0; i < displayItems.length; i++)
           _ExerciseRankCard(
             rank: i + 1,
-            detail: analysis.exerciseDetails[i],
+            detail: displayItems[i],
           ),
+        if (totalCount > 5) ...[
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => showAll.value = !showAll.value,
+              icon: Icon(
+                showAll.value ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                size: 18,
+                color: Colors.amber,
+              ),
+              label: Text(
+                showAll.value
+                    ? '一部を折りたたむ'
+                    : 'すべて表示（残り ${totalCount - 5} 種目）',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -596,7 +635,7 @@ class _ExerciseRankCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         if (baseTop != null && bestTop != null)
                           Text(
-                            '${_fmtW(baseTop.weightKg)}×${baseTop.reps}  ➔  ${_fmtW(bestTop.weightKg)}×${bestTop.reps}',
+                            '${_fmtW(baseTop.weightKg)}kg × ${baseTop.reps}回  ➔  ${_fmtW(bestTop.weightKg)}kg × ${bestTop.reps}回',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -687,6 +726,11 @@ class _OneRmComparisonSection extends StatelessWidget {
 
     if (multies.isEmpty) return const SizedBox.shrink();
 
+    final maxOneRm = multies.fold<double>(
+      0.0,
+      (max, e) => e.bestOneRm > max ? e.bestOneRm : max,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -708,8 +752,11 @@ class _OneRmComparisonSection extends StatelessWidget {
               children: [
                 for (final item in multies)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _OneRmBarRow(item: item),
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _OneRmBarRow(
+                      item: item,
+                      maxSectionOneRm: maxOneRm > 0 ? maxOneRm : 100.0,
+                    ),
                   ),
               ],
             ),
@@ -721,9 +768,13 @@ class _OneRmComparisonSection extends StatelessWidget {
 }
 
 class _OneRmBarRow extends StatelessWidget {
-  const _OneRmBarRow({required this.item});
+  const _OneRmBarRow({
+    required this.item,
+    required this.maxSectionOneRm,
+  });
 
   final ExerciseOverloadDetail item;
+  final double maxSectionOneRm;
 
   @override
   Widget build(BuildContext context) {
@@ -742,8 +793,8 @@ class _OneRmBarRow extends StatelessWidget {
             ),
             Text(
               isUp
-                  ? '+${delta.toStringAsFixed(1)}kg'
-                  : '${delta.toStringAsFixed(1)}kg',
+                  ? '+${delta.toStringAsFixed(1)}kg (${item.oneRmGainPercent >= 0 ? '+' : ''}${item.oneRmGainPercent.toStringAsFixed(1)}%)'
+                  : '±0kg (維持)',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -753,65 +804,76 @@ class _OneRmBarRow extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        Row(
-          children: [
-            SizedBox(
-              width: 54,
-              child: Text(
-                '${item.initialOneRm.toStringAsFixed(1)}kg',
-                style: const TextStyle(fontSize: 11, color: Colors.white54),
-              ),
-            ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Container(
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: item.bestOneRm > 0
-                        ? (item.initialOneRm / item.bestOneRm).clamp(0.1, 1.0)
-                        : 0.5,
-                    child: Container(
-                      height: 10,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final totalWidth = constraints.maxWidth;
+            final baseRatio = (item.initialOneRm / maxSectionOneRm).clamp(0.05, 1.0);
+            final bestRatio = (item.bestOneRm / maxSectionOneRm).clamp(0.05, 1.0);
+
+            final baseWidth = totalWidth * baseRatio;
+            final bestWidth = totalWidth * bestRatio;
+
+            return Column(
+              children: [
+                Stack(
+                  children: [
+                    // 背景トラック
+                    Container(
+                      height: 12,
+                      width: totalWidth,
                       decoration: BoxDecoration(
-                        color: Colors.white38,
-                        borderRadius: BorderRadius.circular(5),
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
-                  ),
-                  if (isUp)
-                    FractionallySizedBox(
-                      widthFactor: 1.0,
-                      child: Container(
-                        height: 10,
+                    // 伸びた分の緑色バー（ベスト値まで伸びる）
+                    if (isUp)
+                      Container(
+                        height: 12,
+                        width: bestWidth,
                         decoration: BoxDecoration(
-                          color: Colors.greenAccent.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(5),
+                          color: Colors.greenAccent.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    // 月初の基準バー（白・グレー）
+                    Container(
+                      height: 12,
+                      width: baseWidth,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.65),
+                        borderRadius: BorderRadius.horizontal(
+                          left: const Radius.circular(6),
+                          right: isUp ? Radius.zero : const Radius.circular(6),
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 54,
-              child: Text(
-                '${item.bestOneRm.toStringAsFixed(1)}kg',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isUp ? Colors.greenAccent : Colors.white,
+                  ],
                 ),
-                textAlign: TextAlign.end,
-              ),
-            ),
-          ],
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '月初: ${item.initialOneRm.toStringAsFixed(1)}kg',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white54,
+                      ),
+                    ),
+                    Text(
+                      '月末: ${item.bestOneRm.toStringAsFixed(1)}kg',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isUp ? Colors.greenAccent : Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
