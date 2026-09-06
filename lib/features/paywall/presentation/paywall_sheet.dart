@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/domain/services/subscription_service.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
-/// Proプラン（月額380円）の案内・購入モーダルシートを表示
+/// Proプラン（月額250円）の案内・購入モーダルシートを表示
 Future<void> showPaywallSheet(
   BuildContext context, {
   String? featureTriggerTitle,
@@ -224,7 +224,7 @@ class _PaywallSheet extends HookConsumerWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: const [
                       Text(
-                        '¥380',
+                        '¥250',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -336,7 +336,7 @@ class _PaywallSheet extends HookConsumerWidget {
                         ),
                       )
                     : const Text(
-                        '今すぐ PRO を始める（月額 ¥380）',
+                        '今すぐ PRO を始める（月額 ¥250）',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

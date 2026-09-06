@@ -313,7 +313,7 @@ class CalendarScreen extends HookConsumerWidget {
                                   ),
                                 ),
                                 child: const Text(
-                                  'PROで過去の記録を見る（¥380/月）',
+                                  'PROで過去の記録を見る（¥250/月）',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),

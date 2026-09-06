@@ -8,6 +8,8 @@ class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._();
 
   static const String entitlementPro = 'pro_features';
+  /// App Store / RevenueCat の月額プロダクトID（価格はストア側で ¥250 に設定）
+  static const String monthlyProductId = 'pro_monthly_250';
   static const String monthlyPackageId = '\$rc_monthly';
 
   // APIキー（環境変数やCIビルドから注入可能）

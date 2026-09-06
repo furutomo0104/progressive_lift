@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:progressive_lift/features/ads/interstitial_ad_service.dart';
 import 'package:progressive_lift/features/workout/presentation/workout_record_panel.dart';
+import 'package:progressive_lift/providers/app_providers.dart';
 
-Future<void> showDayWorkoutSheet(BuildContext context, DateTime day) {
-  return showModalBottomSheet<void>(
+Future<void> showDayWorkoutSheet(BuildContext context, DateTime day) async {
+  final container = ProviderScope.containerOf(context);
+
+  await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -42,4 +47,10 @@ Future<void> showDayWorkoutSheet(BuildContext context, DateTime day) {
       );
     },
   );
+
+  // 記録シートを閉じたタイミング＝セッション区切りとしてインタースティシャルを試行
+  if (!context.mounted) return;
+  final isPro =
+      container.read(proSubscriptionNotifierProvider).valueOrNull ?? false;
+  await InterstitialAdService.instance.showIfAllowed(isPro: isPro);
 }

@@ -46,7 +46,7 @@ class AiSuggestCard extends ConsumerWidget {
               data: (text) {
                 if (!isPro) {
                   return Text(
-                    'PROプラン（¥380/月）で、過去のトップセット推移から今日の推奨重量・回数をAIが自動提案します。',
+                    'PROプラン（¥250/月）で、過去のトップセット推移から今日の推奨重量・回数をAIが自動提案します。',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white60,
                         ),
