@@ -16,11 +16,15 @@ workflows:
         bundle_identifier: com.overload.progressiveLift
     scripts:
       - name: Get packages
-        script: flutter pub get
+        script: |
+          flutter config --no-enable-swift-package-manager
+          flutter pub get
       - name: Code generation
         script: dart run build_runner build --delete-conflicting-outputs
       - name: Install CocoaPods dependencies
-        script: find . -name "Podfile" -execdir pod install \;
+        script: |
+          cd ios
+          pod install --repo-update
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles --project ios/Runner.xcodeproj
       - name: Build IPA
