@@ -265,45 +265,48 @@ class _PaywallSheet extends HookConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final url =
-                      await SubscriptionService.instance.getManagementUrl();
-                  if (url == null) {
-                    if (context.mounted) {
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final url =
+                        await SubscriptionService.instance.getManagementUrl();
+                    if (url == null) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('サブスクリプション管理画面を開けませんでした。'),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                    final uri = Uri.parse(url);
+                    final launched = await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+                    if (!launched && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('サブスクリプション管理画面を開けませんでした。'),
+                          content: Text('App Store / Play の管理画面を開けませんでした。'),
                         ),
                       );
                     }
-                    return;
-                  }
-                  final uri = Uri.parse(url);
-                  final launched = await launchUrl(
-                    uri,
-                    mode: LaunchMode.externalApplication,
-                  );
-                  if (!launched && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('App Store / Play の管理画面を開けませんでした。'),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.settings_outlined, size: 18),
-                label: const Text(
-                  '解約・プラン管理（ストア設定）',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white70,
-                  side: const BorderSide(color: Colors.white24),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  },
+                  icon: const Icon(Icons.settings_outlined, size: 14),
+                  label: const Text(
+                    '解約・プラン管理',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white54,
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                   ),
                 ),
               ),

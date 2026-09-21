@@ -252,13 +252,13 @@ class TopSetComboChart extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                _ScrollToLatestView(
+                  contentKey: points.length,
                   child: chart,
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '← 横にスワイプで全期間を表示',
+                  '← 左にスワイプで過去の記録を表示',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 10, color: Colors.white38),
                 ),
@@ -401,6 +401,68 @@ class _LegendItem extends StatelessWidget {
           style: const TextStyle(fontSize: 11, color: Colors.white70),
         ),
       ],
+    );
+  }
+}
+
+/// 横スクロール時に最新（右端）を初期表示する。
+class _ScrollToLatestView extends StatefulWidget {
+  const _ScrollToLatestView({
+    required this.child,
+    required this.contentKey,
+  });
+
+  final Widget child;
+  final Object contentKey;
+
+  @override
+  State<_ScrollToLatestView> createState() => _ScrollToLatestViewState();
+}
+
+class _ScrollToLatestViewState extends State<_ScrollToLatestView> {
+  final _controller = ScrollController();
+  var _didJump = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToLatest());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ScrollToLatestView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.contentKey != widget.contentKey) {
+      _didJump = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToLatest());
+    }
+  }
+
+  void _jumpToLatest() {
+    if (!mounted || _didJump) return;
+    if (!_controller.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToLatest());
+      return;
+    }
+    final max = _controller.position.maxScrollExtent;
+    if (max > 0) {
+      _controller.jumpTo(max);
+    }
+    _didJump = true;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _controller,
+      scrollDirection: Axis.horizontal,
+      child: widget.child,
     );
   }
 }
