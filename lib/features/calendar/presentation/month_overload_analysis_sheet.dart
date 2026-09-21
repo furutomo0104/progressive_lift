@@ -966,6 +966,11 @@ class _OneRmComparisonSection extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 4),
+        const Text(
+          '灰色＝月初の推定1RM　／　緑＝その月から増えた分',
+          style: TextStyle(fontSize: 11, color: Colors.white54),
+        ),
         const SizedBox(height: 10),
         Card(
           child: Padding(
@@ -1045,6 +1050,9 @@ class _OneRmBarRow extends StatelessWidget {
   final ExerciseOverloadDetail item;
   final double maxSectionOneRm;
 
+  static const _baseColor = Color(0xFF9E9E9E);
+  static const _gainColor = Color(0xFF69F0AE);
+
   @override
   Widget build(BuildContext context) {
     final delta = item.oneRmDelta;
@@ -1056,86 +1064,91 @@ class _OneRmBarRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              item.exerciseName,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            Expanded(
+              child: Text(
+                item.exerciseName,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+            const SizedBox(width: 8),
             Text(
               isUp
-                  ? '+${delta.toStringAsFixed(1)}kg (${item.oneRmGainPercent >= 0 ? '+' : ''}${item.oneRmGainPercent.toStringAsFixed(1)}%)'
-                  : '±0kg (維持)',
+                  ? '+${delta.toStringAsFixed(1)}kg'
+                  : '変化なし',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isUp ? Colors.greenAccent : Colors.white60,
+                color: isUp ? _gainColor : Colors.white60,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, constraints) {
             final totalWidth = constraints.maxWidth;
-            final baseRatio = (item.initialOneRm / maxSectionOneRm).clamp(0.05, 1.0);
-            final bestRatio = (item.bestOneRm / maxSectionOneRm).clamp(0.05, 1.0);
-
+            final baseRatio =
+                (item.initialOneRm / maxSectionOneRm).clamp(0.0, 1.0);
+            final bestRatio =
+                (item.bestOneRm / maxSectionOneRm).clamp(0.0, 1.0);
             final baseWidth = totalWidth * baseRatio;
-            final bestWidth = totalWidth * bestRatio;
+            final gainWidth = isUp
+                ? (totalWidth * (bestRatio - baseRatio)).clamp(0.0, totalWidth)
+                : 0.0;
 
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    // 背景トラック
-                    Container(
-                      height: 12,
-                      width: totalWidth,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    // 伸びた分の緑色バー（ベスト値まで伸びる）
-                    if (isUp)
-                      Container(
-                        height: 12,
-                        width: bestWidth,
-                        decoration: BoxDecoration(
-                          color: Colors.greenAccent.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(6),
+                // 積み上げバー: [月初][増加分] — 緑は増加分のみ
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: SizedBox(
+                    height: 14,
+                    width: totalWidth,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: totalWidth,
+                          color: Colors.white.withValues(alpha: 0.06),
                         ),
-                      ),
-                    // 月初の基準バー（白・グレー）
-                    Container(
-                      height: 12,
-                      width: baseWidth,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.65),
-                        borderRadius: BorderRadius.horizontal(
-                          left: const Radius.circular(6),
-                          right: isUp ? Radius.zero : const Radius.circular(6),
+                        Row(
+                          children: [
+                            if (baseWidth > 0)
+                              Container(
+                                width: baseWidth,
+                                height: 14,
+                                color: _baseColor.withValues(alpha: 0.85),
+                              ),
+                            if (gainWidth > 0)
+                              Container(
+                                width: gainWidth,
+                                height: 14,
+                                color: _gainColor.withValues(alpha: 0.9),
+                              ),
+                          ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    _MiniLegend(color: _baseColor, label: '月初'),
+                    const SizedBox(width: 10),
+                    if (isUp) ...[
+                      _MiniLegend(color: _gainColor, label: '増加分'),
+                      const SizedBox(width: 10),
+                    ],
+                    const Spacer(),
                     Text(
-                      '月初: ${item.initialOneRm.toStringAsFixed(1)}kg',
+                      '${item.initialOneRm.toStringAsFixed(1)} → ${item.bestOneRm.toStringAsFixed(1)} kg',
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    Text(
-                      '月末: ${item.bestOneRm.toStringAsFixed(1)}kg',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: isUp ? Colors.greenAccent : Colors.white70,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -1143,6 +1156,35 @@ class _OneRmBarRow extends StatelessWidget {
               ],
             );
           },
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniLegend extends StatelessWidget {
+  const _MiniLegend({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Colors.white54),
         ),
       ],
     );

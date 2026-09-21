@@ -22,6 +22,7 @@ class InterstitialAdService {
       Platform.environment.containsKey('FLUTTER_TEST');
 
   Future<void> preload() async {
+    if (!AdConfig.enableInterstitialAds) return;
     if (_isFlutterTest || _ad != null || _isLoading) return;
     _isLoading = true;
     try {
@@ -63,6 +64,7 @@ class InterstitialAdService {
 
   /// 無料ユーザー向け。頻度制限内なら表示を試みる（失敗しても例外を投げない）
   Future<void> showIfAllowed({required bool isPro}) async {
+    if (!AdConfig.enableInterstitialAds) return;
     if (isPro || _isFlutterTest || _isShowing) return;
 
     try {

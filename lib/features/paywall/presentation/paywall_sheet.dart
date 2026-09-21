@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/domain/services/subscription_service.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Proプラン（月額250円）の案内・購入モーダルシートを表示
 Future<void> showPaywallSheet(
@@ -246,7 +247,7 @@ class _PaywallSheet extends HookConsumerWidget {
             const SizedBox(height: 16),
 
             // 購入ボタン
-            if (isPro)
+            if (isPro) ...[
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
@@ -263,8 +264,50 @@ class _PaywallSheet extends HookConsumerWidget {
                     ),
                   ),
                 ),
-              )
-            else
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final url =
+                      await SubscriptionService.instance.getManagementUrl();
+                  if (url == null) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('サブスクリプション管理画面を開けませんでした。'),
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  final uri = Uri.parse(url);
+                  final launched = await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
+                  if (!launched && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('App Store / Play の管理画面を開けませんでした。'),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.settings_outlined, size: 18),
+                label: const Text(
+                  '解約・プラン管理（ストア設定）',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ] else
               ElevatedButton(
                 onPressed: isPurchasing.value || isRestoring.value
                     ? null
@@ -391,7 +434,7 @@ class _PaywallSheet extends HookConsumerWidget {
 
             // 注記・規約
             const Text(
-              '※ サブスクリプションはいつでも App Store のアカウント設定から解約できます。更新日の24時間前までに解約されない限り自動更新されます。',
+              '※ 解約は「解約・プラン管理」から App Store / Google Play の設定で行えます。更新日の24時間前までに解約されない限り自動更新されます。',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 10, color: Colors.white38),
             ),

@@ -128,28 +128,38 @@ class CalendarScreen extends HookConsumerWidget {
         title: const Text('筋記録'),
         actions: [
           if (isPro)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber, width: 1.2),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.workspace_premium, size: 14, color: Colors.amber),
-                  SizedBox(width: 4),
-                  Text(
-                    'PRO',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber,
-                    ),
+                onTap: () => showPaywallSheet(context),
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber, width: 1.2),
                   ),
-                ],
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.workspace_premium,
+                          size: 14, color: Colors.amber),
+                      SizedBox(width: 4),
+                      Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             )
           else

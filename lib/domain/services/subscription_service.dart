@@ -106,6 +106,32 @@ class SubscriptionService {
     }
   }
 
+  /// App Store / Google Play のサブスクリプション管理画面を開く
+  /// （解約・プラン変更はストア側でのみ可能なため、アプリ内から管理画面へ誘導する）
+  Future<String?> getManagementUrl() async {
+    final apiKey = Platform.isIOS
+        ? _apiKeyApple
+        : (Platform.isAndroid ? _apiKeyGoogle : '');
+
+    if (apiKey.trim().isNotEmpty) {
+      try {
+        final customerInfo = await Purchases.getCustomerInfo();
+        final url = customerInfo.managementURL?.trim();
+        if (url != null && url.isNotEmpty) return url;
+      } catch (e) {
+        debugPrint('SubscriptionService getManagementUrl failed: $e');
+      }
+    }
+
+    if (Platform.isIOS) {
+      return 'https://apps.apple.com/account/subscriptions';
+    }
+    if (Platform.isAndroid) {
+      return 'https://play.google.com/store/account/subscriptions';
+    }
+    return null;
+  }
+
   /// デバッグ用・モック状態の切り替え
   void setMockPro(bool isPro) {
     _mockIsPro = isPro;

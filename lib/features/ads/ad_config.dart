@@ -28,9 +28,14 @@ class AdConfig {
   static String get interstitialAdUnitId =>
       Platform.isIOS ? _iosInterstitialUnitId : _androidInterstitialUnitId;
 
+  /// リリース時はフルスクリーン広告をオフ（バナーのみ）。
+  /// 収益が足りない場合に true へ戻す。
+  static const bool enableInterstitialAds = false;
+
   /// インタースティシャルの最小間隔
-  static const Duration interstitialMinInterval = Duration(hours: 6);
+  /// ※ ✕ボタン出現タイミングは AdMob 側制御のためアプリからは短縮不可。
+  static const Duration interstitialMinInterval = Duration(hours: 12);
 
   /// 1日あたりの最大表示回数
-  static const int interstitialMaxPerDay = 2;
+  static const int interstitialMaxPerDay = 1;
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +8,7 @@ import 'package:progressive_lift/domain/models/top_set_point.dart';
 /// トップセット特化型複合グラフ
 /// - 左Y軸: 最高重量（折れ線 / 紫）
 /// - 右Y軸: 回数（棒 / 水色）
+/// - 記録が増えても棒が重ならないよう、スロット幅に応じて棒幅を縮小し、必要なら横スクロール
 class TopSetComboChart extends StatelessWidget {
   const TopSetComboChart({
     super.key,
@@ -19,6 +22,7 @@ class TopSetComboChart extends StatelessWidget {
   static const _leftAxisReserved = 46.0;
   static const _rightAxisReserved = 42.0;
   static const _bottomAxisReserved = 28.0;
+  static const _minSlotWidth = 28.0;
 
   static const _weightColor = Color(0xFF7986CB);
   static const _repsColor = Color(0xFF4FC3F7);
@@ -47,7 +51,8 @@ class TopSetComboChart extends StatelessWidget {
         : (maxW > 0 ? maxW * 0.15 : 5.0).clamp(2.5, 10.0);
     const repsPad = 1.0;
 
-    final minWeightAxis = (minW - weightPad).clamp(0.0, double.infinity).floorToDouble();
+    final minWeightAxis =
+        (minW - weightPad).clamp(0.0, double.infinity).floorToDouble();
     var maxWeightAxis = (maxW + weightPad).ceilToDouble();
     if (maxWeightAxis <= minWeightAxis) {
       maxWeightAxis = minWeightAxis + 10.0;
@@ -66,37 +71,18 @@ class TopSetComboChart extends StatelessWidget {
       return minWeightAxis + (r - minRepsAxis) / rangeR * rangeW;
     }
 
-    final lineSpots = <FlSpot>[];
-    final repBarSeries = <LineChartBarData>[];
-
-    for (var i = 0; i < points.length; i++) {
-      final p = points[i];
-      final x = i.toDouble();
-      lineSpots.add(FlSpot(x, p.weightKg));
-      repBarSeries.add(
-        LineChartBarData(
-          spots: [
-            FlSpot(x, minWeightAxis),
-            FlSpot(x, mapReps(p.reps.toDouble())),
-          ],
-          isCurved: false,
-          color: _repsColor.withValues(alpha: 0.75),
-          barWidth: 14,
-          isStrokeCapRound: false,
-          dotData: const FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-        ),
-      );
-    }
-
-    final weightLineIndex = repBarSeries.length;
-    final minX = -0.5;
-    final maxX = points.length - 0.5;
+    // 日付ラベルの間引き（多いときは隔日・3日おき）
+    final labelStep = points.length <= 8
+        ? 1
+        : points.length <= 16
+            ? 2
+            : points.length <= 30
+                ? 3
+                : 5;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 軸ヘッダー（左: 重量 / 右: 回数）
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           child: Row(
@@ -150,76 +136,138 @@ class TopSetComboChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        SizedBox(
-          height: height,
-          child: LineChart(
-            LineChartData(
-              minY: minWeightAxis,
-              maxY: maxWeightAxis,
-              minX: minX,
-              maxX: maxX,
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: weightPad > 5 ? 5 : 2.5,
-                getDrawingHorizontalLine: (v) => FlLine(
-                  color: Colors.white.withValues(alpha: 0.06),
-                  strokeWidth: 1,
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              titlesData: _sharedTitlesData(
-                points: points,
-                dateFmt: dateFmt,
-                minWeightAxis: minWeightAxis,
-                maxWeightAxis: maxWeightAxis,
-                minRepsAxis: minRepsAxis,
-                maxRepsAxis: maxRepsAxis,
-                showBottom: true,
-              ),
-              lineBarsData: [
-                ...repBarSeries,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final availablePlotWidth = math.max(
+              0.0,
+              constraints.maxWidth - _leftAxisReserved - _rightAxisReserved,
+            );
+            final neededWidth = points.length * _minSlotWidth;
+            final scrollable = neededWidth > availablePlotWidth + 1;
+            final plotWidth =
+                scrollable ? neededWidth : availablePlotWidth;
+            final slotWidth = plotWidth / points.length;
+            // 棒幅はスロットの約55%、最大14・最小3
+            final barWidth = (slotWidth * 0.55).clamp(3.0, 14.0);
+
+            final lineSpots = <FlSpot>[];
+            final repBarSeries = <LineChartBarData>[];
+
+            for (var i = 0; i < points.length; i++) {
+              final p = points[i];
+              final x = i.toDouble();
+              lineSpots.add(FlSpot(x, p.weightKg));
+              repBarSeries.add(
                 LineChartBarData(
-                  spots: lineSpots,
+                  spots: [
+                    FlSpot(x, minWeightAxis),
+                    FlSpot(x, mapReps(p.reps.toDouble())),
+                  ],
                   isCurved: false,
-                  color: _weightColor,
-                  barWidth: 3,
-                  dotData: FlDotData(
+                  color: _repsColor.withValues(alpha: 0.75),
+                  barWidth: barWidth,
+                  isStrokeCapRound: false,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(show: false),
+                ),
+              );
+            }
+
+            final weightLineIndex = repBarSeries.length;
+            final minX = -0.5;
+            final maxX = points.length - 0.5;
+
+            final chart = SizedBox(
+              width: plotWidth + _leftAxisReserved + _rightAxisReserved,
+              height: height,
+              child: LineChart(
+                LineChartData(
+                  minY: minWeightAxis,
+                  maxY: maxWeightAxis,
+                  minX: minX,
+                  maxX: maxX,
+                  gridData: FlGridData(
                     show: true,
-                    getDotPainter: (spot, percent, bar, index) =>
-                        FlDotCirclePainter(
-                      radius: 4,
-                      color: _weightColor,
-                      strokeWidth: 2,
-                      strokeColor: Colors.white,
+                    drawVerticalLine: false,
+                    horizontalInterval: weightPad > 5 ? 5 : 2.5,
+                    getDrawingHorizontalLine: (v) => FlLine(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      strokeWidth: 1,
                     ),
                   ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: _weightColor.withValues(alpha: 0.12),
+                  borderData: FlBorderData(show: false),
+                  titlesData: _sharedTitlesData(
+                    points: points,
+                    dateFmt: dateFmt,
+                    minWeightAxis: minWeightAxis,
+                    maxWeightAxis: maxWeightAxis,
+                    minRepsAxis: minRepsAxis,
+                    maxRepsAxis: maxRepsAxis,
+                    labelStep: labelStep,
+                  ),
+                  lineBarsData: [
+                    ...repBarSeries,
+                    LineChartBarData(
+                      spots: lineSpots,
+                      isCurved: false,
+                      color: _weightColor,
+                      barWidth: 3,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, bar, index) =>
+                            FlDotCirclePainter(
+                          radius: points.length > 20 ? 2.5 : 4,
+                          color: _weightColor,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: _weightColor.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ],
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (spots) => spots.map((s) {
+                        if (s.barIndex != weightLineIndex) return null;
+                        final i = s.x.round();
+                        if (i < 0 || i >= points.length) return null;
+                        final p = points[i];
+                        return LineTooltipItem(
+                          '最高重量: ${p.weightKg}kg\n'
+                          '回数: ${p.reps} reps',
+                          const TextStyle(color: Colors.white, fontSize: 12),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
-              ],
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (spots) => spots.map((s) {
-                    if (s.barIndex != weightLineIndex) return null;
-                    final i = s.x.round();
-                    if (i < 0 || i >= points.length) return null;
-                    final p = points[i];
-                    return LineTooltipItem(
-                      '最高重量: ${p.weightKg}kg\n'
-                      '回数: ${p.reps} reps',
-                      const TextStyle(color: Colors.white, fontSize: 12),
-                    );
-                  }).toList(),
-                ),
               ),
-            ),
-          ),
+            );
+
+            if (!scrollable) return chart;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: chart,
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '← 横にスワイプで全期間を表示',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 10, color: Colors.white38),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 8),
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _LegendItem(
@@ -227,7 +275,7 @@ class TopSetComboChart extends StatelessWidget {
               label: '折れ線：最高重量 (kg)',
               isLine: true,
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             _LegendItem(
               color: _repsColor,
               label: '棒：回数 (reps)',
@@ -246,7 +294,7 @@ class TopSetComboChart extends StatelessWidget {
     required double maxWeightAxis,
     required double minRepsAxis,
     required double maxRepsAxis,
-    required bool showBottom,
+    required int labelStep,
   }) {
     return FlTitlesData(
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -288,12 +336,17 @@ class TopSetComboChart extends StatelessWidget {
       ),
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
-          showTitles: showBottom,
+          showTitles: true,
           reservedSize: _bottomAxisReserved,
+          interval: 1,
           getTitlesWidget: (value, meta) {
-            if (!showBottom) return const SizedBox.shrink();
             final i = value.round();
             if (i < 0 || i >= points.length) return const SizedBox.shrink();
+            // 端点は必ず表示、途中は間引き
+            final isEdge = i == 0 || i == points.length - 1;
+            if (!isEdge && i % labelStep != 0) {
+              return const SizedBox.shrink();
+            }
             return Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(

@@ -48,7 +48,7 @@ Future<void> showDayWorkoutSheet(BuildContext context, DateTime day) async {
     },
   );
 
-  // 記録シートを閉じたタイミング＝セッション区切りとしてインタースティシャルを試行
+  // フルスクリーン広告は AdConfig.enableInterstitialAds が true のときのみ
   if (!context.mounted) return;
   final isPro =
       container.read(proSubscriptionNotifierProvider).valueOrNull ?? false;
