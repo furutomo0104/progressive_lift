@@ -145,21 +145,9 @@ class ExerciseCard extends HookConsumerWidget {
                               ),
                             )
                           else
-                            Text.rich(
-                              TextSpan(
-                                text: '${sets.length}セット',
-                                children: [
-                                  const TextSpan(text: '  ·  TOP '),
-                                  TextSpan(
-                                    text:
-                                        '${_formatWeight(topSet.weightKg)}kg × ${topSet.reps}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Text(
+                              '${sets.length}セット  ·  TOP '
+                              '${_formatWeight(topSet.weightKg)}kg × ${topSet.reps}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
