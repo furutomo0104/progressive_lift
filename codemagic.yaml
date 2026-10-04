@@ -8,6 +8,9 @@ workflows:
     environment:
       groups:
         - gemini_credentials
+      vars:
+        # Xcode 26 の altool はバンドルIDからアプリを特定できずエラー19になることがある
+        APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--use-old-altool"
       flutter: stable
       xcode: latest
       cocoapods: default
