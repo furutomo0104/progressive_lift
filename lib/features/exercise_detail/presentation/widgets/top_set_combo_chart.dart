@@ -2,14 +2,24 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
+
+const _leftAxisReserved = 46.0;
+const _rightAxisReserved = 42.0;
+const _bottomAxisReserved = 28.0;
+const _minSlotWidth = 28.0;
+
+const _weightColor = Color(0xFF7986CB);
+const _repsColor = Color(0xFF4FC3F7);
 
 /// トップセット特化型複合グラフ
 /// - 左Y軸: 最高重量（折れ線 / 紫）
 /// - 右Y軸: 回数（棒 / 水色）
 /// - 記録が増えても棒が重ならないよう、スロット幅に応じて棒幅を縮小し、必要なら横スクロール
-class TopSetComboChart extends StatelessWidget {
+/// - タップ／長押しした日の重量・回数はグラフ上部の固定表示に出す（指で隠れない・範囲外に出ない）
+class TopSetComboChart extends StatefulWidget {
   const TopSetComboChart({
     super.key,
     required this.points,
@@ -19,13 +29,38 @@ class TopSetComboChart extends StatelessWidget {
   final List<TopSetPoint> points;
   final double height;
 
-  static const _leftAxisReserved = 46.0;
-  static const _rightAxisReserved = 42.0;
-  static const _bottomAxisReserved = 28.0;
-  static const _minSlotWidth = 28.0;
+  @override
+  State<TopSetComboChart> createState() => _TopSetComboChartState();
+}
 
-  static const _weightColor = Color(0xFF7986CB);
-  static const _repsColor = Color(0xFF4FC3F7);
+class _TopSetComboChartState extends State<TopSetComboChart> {
+  int? _selectedIndex;
+
+  List<TopSetPoint> get points => widget.points;
+  double get height => widget.height;
+
+  @override
+  void didUpdateWidget(covariant TopSetComboChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final selected = _selectedIndex;
+    if (selected != null && selected >= points.length) {
+      _selectedIndex = null;
+    }
+  }
+
+  void _handleTouch(FlTouchEvent event, LineTouchResponse? response) {
+    if (event is! FlTapUpEvent &&
+        event is! FlLongPressStart &&
+        event is! FlLongPressMoveUpdate) {
+      return;
+    }
+    final spots = response?.lineBarSpots;
+    if (spots == null || spots.isEmpty) return;
+    final i = spots.first.x.round();
+    if (i < 0 || i >= points.length || i == _selectedIndex) return;
+    HapticFeedback.selectionClick();
+    setState(() => _selectedIndex = i);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +170,12 @@ class TopSetComboChart extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
+        _SelectedPointReadout(
+          point: points[_selectedIndex ?? points.length - 1],
+          isDefault: _selectedIndex == null,
+        ),
+        const SizedBox(height: 6),
         LayoutBuilder(
           builder: (context, constraints) {
             final availablePlotWidth = math.max(
@@ -150,6 +190,7 @@ class TopSetComboChart extends StatelessWidget {
             // 棒幅はスロットの約55%、最大14・最小3
             final barWidth = (slotWidth * 0.55).clamp(3.0, 14.0);
 
+            final selected = _selectedIndex;
             final lineSpots = <FlSpot>[];
             final repBarSeries = <LineChartBarData>[];
 
@@ -157,6 +198,9 @@ class TopSetComboChart extends StatelessWidget {
               final p = points[i];
               final x = i.toDouble();
               lineSpots.add(FlSpot(x, p.weightKg));
+              final barAlpha = selected == null
+                  ? 0.75
+                  : (i == selected ? 1.0 : 0.4);
               repBarSeries.add(
                 LineChartBarData(
                   spots: [
@@ -164,7 +208,7 @@ class TopSetComboChart extends StatelessWidget {
                     FlSpot(x, mapReps(p.reps.toDouble())),
                   ],
                   isCurved: false,
-                  color: _repsColor.withValues(alpha: 0.75),
+                  color: _repsColor.withValues(alpha: barAlpha),
                   barWidth: barWidth,
                   isStrokeCapRound: false,
                   dotData: const FlDotData(show: false),
@@ -173,7 +217,6 @@ class TopSetComboChart extends StatelessWidget {
               );
             }
 
-            final weightLineIndex = repBarSeries.length;
             final minX = -0.5;
             final maxX = points.length - 0.5;
 
@@ -215,12 +258,19 @@ class TopSetComboChart extends StatelessWidget {
                       dotData: FlDotData(
                         show: true,
                         getDotPainter: (spot, percent, bar, index) =>
-                            FlDotCirclePainter(
-                          radius: points.length > 20 ? 2.5 : 4,
-                          color: _weightColor,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        ),
+                            index == selected
+                                ? FlDotCirclePainter(
+                                    radius: 6,
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                    strokeColor: _weightColor,
+                                  )
+                                : FlDotCirclePainter(
+                                    radius: points.length > 20 ? 2.5 : 4,
+                                    color: _weightColor,
+                                    strokeWidth: 2,
+                                    strokeColor: Colors.white,
+                                  ),
                       ),
                       belowBarData: BarAreaData(
                         show: true,
@@ -228,20 +278,22 @@ class TopSetComboChart extends StatelessWidget {
                       ),
                     ),
                   ],
+                  extraLinesData: ExtraLinesData(
+                    verticalLines: [
+                      if (selected != null)
+                        VerticalLine(
+                          x: selected.toDouble(),
+                          color: Colors.white38,
+                          strokeWidth: 1,
+                          dashArray: const [4, 3],
+                        ),
+                    ],
+                  ),
                   lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipItems: (spots) => spots.map((s) {
-                        if (s.barIndex != weightLineIndex) return null;
-                        final i = s.x.round();
-                        if (i < 0 || i >= points.length) return null;
-                        final p = points[i];
-                        return LineTooltipItem(
-                          '最高重量: ${p.weightKg}kg\n'
-                          '回数: ${p.reps} reps',
-                          const TextStyle(color: Colors.white, fontSize: 12),
-                        );
-                      }).toList(),
-                    ),
+                    handleBuiltInTouches: false,
+                    touchSpotThreshold: slotWidth,
+                    longPressDuration: const Duration(milliseconds: 300),
+                    touchCallback: _handleTouch,
                   ),
                 ),
               ),
@@ -356,6 +408,65 @@ class TopSetComboChart extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// 選択中（未選択時は最新）のトップセットを常に同じ位置に表示する。
+class _SelectedPointReadout extends StatelessWidget {
+  const _SelectedPointReadout({
+    required this.point,
+    required this.isDefault,
+  });
+
+  final TopSetPoint point;
+  final bool isDefault;
+
+  static const _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+
+  static String _formatWeight(double w) =>
+      w % 1 == 0 ? w.toStringAsFixed(0) : w.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    const valueStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    final d = point.date;
+    final dateLabel = '${d.month}/${d.day}(${_weekdays[d.weekday - 1]})';
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              isDefault ? '最新 $dateLabel' : dateLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDefault ? Colors.white54 : Colors.white,
+                fontWeight: isDefault ? FontWeight.normal : FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '${_formatWeight(point.weightKg)}kg',
+            style: valueStyle.copyWith(color: _weightColor),
+          ),
+          const Text(
+            ' × ',
+            style: TextStyle(fontSize: 14, color: Colors.white38),
+          ),
+          Text(
+            '${point.reps}回',
+            style: valueStyle.copyWith(color: _repsColor),
+          ),
+        ],
       ),
     );
   }

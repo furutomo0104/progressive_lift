@@ -70,6 +70,10 @@ void main() {
     expect(find.text('回数 (reps)'), findsOneWidget);
     expect(find.text('折れ線：最高重量 (kg)'), findsOneWidget);
     expect(find.text('棒：回数 (reps)'), findsOneWidget);
+    // 未選択時は最新のトップセットを固定表示
+    expect(find.text('最新 8/8(土)'), findsOneWidget);
+    expect(find.text('82.5kg'), findsOneWidget);
+    expect(find.text('8回'), findsWidgets);
   });
 
   test('AiOverloadCoachServiceがルールベースで正常にレポートを生成する', () {

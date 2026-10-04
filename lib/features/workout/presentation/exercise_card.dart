@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
+import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/mini_top_set_chart.dart';
 import 'package:progressive_lift/features/workout/presentation/reassign_exercise_record_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
@@ -39,6 +40,7 @@ class ExerciseCard extends HookConsumerWidget {
     final editingSetId = useState<int?>(null);
 
     final muscle = exercise.muscleGroup.displayGroup;
+    final topSet = TopSetExtractor.pickTopSet(sets);
 
     Future<void> addSet() async {
       final w = double.tryParse(weightCtrl.text);
@@ -134,17 +136,37 @@ class ExerciseCard extends HookConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            sets.isEmpty
-                                ? 'セット未記録'
-                                : '${sets.length}セット',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: sets.isEmpty
-                                  ? Colors.white38
-                                  : Colors.white54,
+                          if (topSet == null)
+                            const Text(
+                              'セット未記録',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white38,
+                              ),
+                            )
+                          else
+                            Text.rich(
+                              TextSpan(
+                                text: '${sets.length}セット',
+                                children: [
+                                  const TextSpan(text: '  ·  TOP '),
+                                  TextSpan(
+                                    text:
+                                        '${_formatWeight(topSet.weightKg)}kg × ${topSet.reps}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.white54,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),

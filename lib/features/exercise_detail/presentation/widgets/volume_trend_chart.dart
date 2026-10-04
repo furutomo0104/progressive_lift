@@ -134,6 +134,8 @@ class VolumeTrendChart extends StatelessWidget {
           ],
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
+              fitInsideHorizontally: true,
+              fitInsideVertically: true,
               getTooltipItems: (spots) => spots.map((s) {
                 final i = s.x.round();
                 if (i < 0 || i >= points.length) return null;
