@@ -5,8 +5,9 @@ import 'package:progressive_lift/core/enums/muscle_group.dart';
 import 'package:progressive_lift/domain/models/month_overload_analysis.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/ai_overload_coach_service.dart';
-import 'package:progressive_lift/domain/services/gemini_overload_coach_service.dart';
+import 'package:progressive_lift/domain/services/one_rm_calculator.dart';
 import 'package:progressive_lift/domain/services/volume_calculator.dart';
+import 'package:progressive_lift/features/exercise_detail/presentation/widgets/estimated_one_rm_chart.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/top_set_combo_chart.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/volume_trend_chart.dart';
 
@@ -30,6 +31,8 @@ void main() {
         totalVolumeKg: 50.0,
         totalSets: 1,
         totalReps: 5,
+        topWeightKg: 10,
+        topReps: 5,
       ),
     ];
 
@@ -42,6 +45,32 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(VolumeTrendChart), findsOneWidget);
+    expect(find.text('最新 8/8(土)'), findsOneWidget);
+    expect(find.text('Vol 50kg'), findsOneWidget);
+    expect(find.text('10kg'), findsOneWidget);
+    expect(find.text('5回'), findsOneWidget);
+  });
+
+  testWidgets('EstimatedOneRmChartが最新のトップセットと推定1RMを表示する', (tester) async {
+    final points = OneRmCalculator.fromTopSetSeries([
+      TopSetPoint(date: DateTime(2026, 8, 1), weightKg: 80, reps: 8),
+      TopSetPoint(date: DateTime(2026, 8, 8), weightKg: 90, reps: 6),
+    ]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: EstimatedOneRmChart(points: points),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('最新 8/8(土)'), findsOneWidget);
+    expect(find.text('1RM 108.0kg'), findsOneWidget);
+    expect(find.text('90kg'), findsOneWidget);
+    expect(find.text('6回'), findsOneWidget);
   });
 
   testWidgets('TopSetComboChartが重量と回数のラベル・軸つきで正しく描画される', (tester) async {
@@ -119,23 +148,6 @@ void main() {
 
     final report = AiOverloadCoachService.generateReport(analysis);
     expect(report.rankGrade, 'S');
-    expect(report.isGeminiGenerated, isFalse);
     expect(report.scoreSummary, contains('過負荷を達成'));
-  });
-
-  test('GeminiOverloadCoachServiceがAPIキー未設定時はnullを返す', () async {
-    final analysis = MonthOverloadAnalysis(
-      month: DateTime(2026, 8, 1),
-      totalExercisesTracked: 0,
-      overloadedExercisesCount: 0,
-      totalPrEventsCount: 0,
-      exerciseDetails: const [],
-      plateauExercises: const [],
-      muscleGroupSetCounts: const {},
-      totalVolumeKg: 0,
-    );
-
-    final report = await GeminiOverloadCoachService.generateGeminiReport(analysis);
-    expect(report, isNull);
   });
 }

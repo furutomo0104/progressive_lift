@@ -5,14 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:progressive_lift/domain/models/top_set_point.dart';
+import 'package:progressive_lift/features/exercise_detail/presentation/widgets/chart_point_readout.dart';
 
 const _leftAxisReserved = 46.0;
 const _rightAxisReserved = 42.0;
 const _bottomAxisReserved = 28.0;
 const _minSlotWidth = 28.0;
 
-const _weightColor = Color(0xFF7986CB);
-const _repsColor = Color(0xFF4FC3F7);
+const _weightColor = chartWeightColor;
+const _repsColor = chartRepsColor;
 
 /// トップセット特化型複合グラフ
 /// - 左Y軸: 最高重量（折れ線 / 紫）
@@ -49,15 +50,8 @@ class _TopSetComboChartState extends State<TopSetComboChart> {
   }
 
   void _handleTouch(FlTouchEvent event, LineTouchResponse? response) {
-    if (event is! FlTapUpEvent &&
-        event is! FlLongPressStart &&
-        event is! FlLongPressMoveUpdate) {
-      return;
-    }
-    final spots = response?.lineBarSpots;
-    if (spots == null || spots.isEmpty) return;
-    final i = spots.first.x.round();
-    if (i < 0 || i >= points.length || i == _selectedIndex) return;
+    final i = chartTouchedIndex(event, response, points.length);
+    if (i == null || i == _selectedIndex) return;
     HapticFeedback.selectionClick();
     setState(() => _selectedIndex = i);
   }
@@ -171,9 +165,16 @@ class _TopSetComboChartState extends State<TopSetComboChart> {
           ),
         ),
         const SizedBox(height: 6),
-        _SelectedPointReadout(
-          point: points[_selectedIndex ?? points.length - 1],
-          isDefault: _selectedIndex == null,
+        Builder(
+          builder: (context) {
+            final p = points[_selectedIndex ?? points.length - 1];
+            return ChartPointReadout(
+              date: p.date,
+              weightKg: p.weightKg,
+              reps: p.reps,
+              isDefault: _selectedIndex == null,
+            );
+          },
         ),
         const SizedBox(height: 6),
         LayoutBuilder(
@@ -408,65 +409,6 @@ class _TopSetComboChartState extends State<TopSetComboChart> {
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-/// 選択中（未選択時は最新）のトップセットを常に同じ位置に表示する。
-class _SelectedPointReadout extends StatelessWidget {
-  const _SelectedPointReadout({
-    required this.point,
-    required this.isDefault,
-  });
-
-  final TopSetPoint point;
-  final bool isDefault;
-
-  static const _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
-
-  static String _formatWeight(double w) =>
-      w % 1 == 0 ? w.toStringAsFixed(0) : w.toStringAsFixed(1);
-
-  @override
-  Widget build(BuildContext context) {
-    const valueStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
-    final d = point.date;
-    final dateLabel = '${d.month}/${d.day}(${_weekdays[d.weekday - 1]})';
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              isDefault ? '最新 $dateLabel' : dateLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDefault ? Colors.white54 : Colors.white,
-                fontWeight: isDefault ? FontWeight.normal : FontWeight.w600,
-              ),
-            ),
-          ),
-          Text(
-            '${_formatWeight(point.weightKg)}kg',
-            style: valueStyle.copyWith(color: _weightColor),
-          ),
-          const Text(
-            ' × ',
-            style: TextStyle(fontSize: 14, color: Colors.white38),
-          ),
-          Text(
-            '${point.reps}回',
-            style: valueStyle.copyWith(color: _repsColor),
-          ),
-        ],
       ),
     );
   }

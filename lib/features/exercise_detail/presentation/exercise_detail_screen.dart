@@ -5,6 +5,7 @@ import 'package:progressive_lift/domain/models/top_set_point.dart';
 import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 import 'package:progressive_lift/domain/services/one_rm_calculator.dart';
 import 'package:progressive_lift/domain/services/volume_calculator.dart';
+import 'package:progressive_lift/features/calendar/presentation/day_workout_sheet.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/ai_suggest_card.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/estimated_one_rm_chart.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/exercise_detail_history_tab.dart';
@@ -154,8 +155,11 @@ class ExerciseDetailScreen extends HookConsumerWidget {
                                 Text('ボリュームの読み込みエラー: $e'),
                           ),
                         _DetailTab.history => historyAsync.when(
-                            data: (history) =>
-                                ExerciseDetailHistoryTab(history: history),
+                            data: (history) => ExerciseDetailHistoryTab(
+                              history: history,
+                              onOpenDay: (day) =>
+                                  showDayWorkoutSheet(context, day),
+                            ),
                             loading: () => const Padding(
                               padding: EdgeInsets.all(32),
                               child: Center(

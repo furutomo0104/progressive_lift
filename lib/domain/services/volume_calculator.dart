@@ -1,5 +1,6 @@
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
+import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 
 class VolumePoint {
   const VolumePoint({
@@ -7,12 +8,16 @@ class VolumePoint {
     required this.totalVolumeKg,
     required this.totalSets,
     required this.totalReps,
+    this.topWeightKg,
+    this.topReps,
   });
 
   final DateTime date;
   final double totalVolumeKg;
   final int totalSets;
   final int totalReps;
+  final double? topWeightKg;
+  final int? topReps;
 }
 
 abstract final class VolumeCalculator {
@@ -28,11 +33,14 @@ abstract final class VolumeCalculator {
       volume += setVolume(set);
       reps += set.reps;
     }
+    final top = TopSetExtractor.pickTopSet(sets);
     return VolumePoint(
       date: date,
       totalVolumeKg: volume,
       totalSets: sets.length,
       totalReps: reps,
+      topWeightKg: top?.weightKg,
+      topReps: top?.reps,
     );
   }
 

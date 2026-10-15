@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/domain/services/subscription_service.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
+import 'package:progressive_lift/shared/legal_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Proプラン（月額250円）の案内・購入モーダルシートを表示
@@ -289,7 +290,7 @@ class _PaywallSheet extends HookConsumerWidget {
                     if (!launched && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('App Store / Play の管理画面を開けませんでした。'),
+                          content: Text('App Store の管理画面を開けませんでした。'),
                         ),
                       );
                     }
@@ -328,6 +329,7 @@ class _PaywallSheet extends HookConsumerWidget {
                                   .read(
                                       proSubscriptionNotifierProvider.notifier)
                                   .refresh();
+                              if (!context.mounted) return;
                               Navigator.of(context).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -437,11 +439,58 @@ class _PaywallSheet extends HookConsumerWidget {
 
             // 注記・規約
             const Text(
-              '※ 解約は「解約・プラン管理」から App Store / Google Play の設定で行えます。更新日の24時間前までに解約されない限り自動更新されます。',
+              '※ 月額¥250（1ヶ月ごとの自動更新）。お支払いは購入確定時に Apple ID に請求されます。'
+              '更新日の24時間前までに解約しない限り自動更新されます。'
+              '解約は「解約・プラン管理」から App Store の設定で行えます。',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 10, color: Colors.white38),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _LegalLinkButton(
+                  label: '利用規約',
+                  url: LegalLinks.termsOfUseUrl,
+                ),
+                const Text(
+                  '·',
+                  style: TextStyle(fontSize: 11, color: Colors.white38),
+                ),
+                _LegalLinkButton(
+                  label: 'プライバシーポリシー',
+                  url: LegalLinks.privacyPolicyUrl,
+                ),
+              ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalLinkButton extends StatelessWidget {
+  const _LegalLinkButton({required this.label, required this.url});
+
+  final String label;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () => LegalLinks.open(context, url),
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.white54,
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          decoration: TextDecoration.underline,
+          decorationColor: Colors.white38,
         ),
       ),
     );

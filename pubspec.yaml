@@ -1,7 +1,7 @@
 name: progressive_lift
 description: Progressive overload visualization for strength training.
 publish_to: 'none'
-version: 1.0.0+23
+version: 1.0.0+24
 
 environment:
   sdk: ^3.9.2
@@ -20,7 +20,6 @@ dependencies:
   fl_chart: ^0.70.2
   intl: ^0.20.2
   flutter_slidable: ^3.1.2
-  google_generative_ai: ^0.4.0
   purchases_flutter: ^8.5.0
   google_mobile_ads: ^5.1.0
   shared_preferences: ^2.3.0
