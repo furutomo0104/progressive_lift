@@ -9,8 +9,8 @@ class LegalLinks {
   static const termsOfUseUrl =
       'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
-  /// 公開後に実URLへ差し替える（未設定のまま提出すると審査で却下される）
-  static const privacyPolicyUrl = '';
+  static const privacyPolicyUrl =
+      'https://furutomo0104.github.io/kinkiroku/privacy';
 
   static Future<void> open(BuildContext context, String url) async {
     final messenger = ScaffoldMessenger.of(context);

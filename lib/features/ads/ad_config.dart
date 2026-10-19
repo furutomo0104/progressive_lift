@@ -1,18 +1,17 @@
 import 'dart:io';
 
-/// AdMob 広告ユニットID（現在は Google 公式テストID）
+/// AdMob 広告ユニットID
 ///
-/// 本番提出前に、AdMob コンソールで発行した本番IDへ差し替える。
+/// iOS のアプリID・バナーは本番ID。Android とインタースティシャルは未発行のため Google 公式テストID。
 class AdConfig {
   AdConfig._();
 
-  /// テスト用アプリID（Info.plist / AndroidManifest 側にも同値を設定）
-  static const String iosAppId = 'ca-app-pub-3940256099942544~1458002511';
+  /// アプリID（Info.plist / AndroidManifest 側にも同値を設定）
+  static const String iosAppId = 'ca-app-pub-6501663052630445~3553386097';
   static const String androidAppId = 'ca-app-pub-3940256099942544~3347511713';
 
-  /// バナー（iOS / Android それぞれのテストユニット）
   static const String _iosBannerUnitId =
-      'ca-app-pub-3940256099942544/2934735716';
+      'ca-app-pub-6501663052630445/7653142159';
   static const String _androidBannerUnitId =
       'ca-app-pub-3940256099942544/6300978111';
 
