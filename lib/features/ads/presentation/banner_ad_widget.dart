@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -18,14 +19,32 @@ class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
   bool _loadAttempted = false;
+  Timer? _retryTimer;
+  int _failureCount = 0;
 
   static bool get _isFlutterTest =>
       Platform.environment.containsKey('FLUTTER_TEST');
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
+  }
+
+  /// 失敗するたびに 30秒 → 60秒 → … と間隔を延ばし、最大5分ごとに再試行する。
+  void _scheduleRetry() {
+    _retryTimer?.cancel();
+    _failureCount++;
+    final seconds = (30 * (1 << (_failureCount - 1))).clamp(30, 300);
+    _retryTimer = Timer(Duration(seconds: seconds), () {
+      if (!mounted) return;
+      final isPro =
+          ref.read(proSubscriptionNotifierProvider).valueOrNull ?? false;
+      if (isPro) return;
+      _loadAttempted = false;
+      _loadAd();
+    });
   }
 
   void _loadAd() {
@@ -42,6 +61,7 @@ class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
             ad.dispose();
             return;
           }
+          _failureCount = 0;
           setState(() {
             _bannerAd = ad as BannerAd;
             _isLoaded = true;
@@ -55,6 +75,7 @@ class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
               _bannerAd = null;
               _isLoaded = false;
             });
+            _scheduleRetry();
           }
         },
       ),
@@ -63,6 +84,9 @@ class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
   }
 
   void _disposeAd() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _failureCount = 0;
     _bannerAd?.dispose();
     _bannerAd = null;
     _isLoaded = false;

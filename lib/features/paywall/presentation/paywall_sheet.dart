@@ -339,6 +339,17 @@ class _PaywallSheet extends HookConsumerWidget {
                               );
                               return;
                             }
+                          } else if (!SubscriptionService
+                              .instance.isMockMode) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    '現在購入を開始できません。通信環境を確認して、しばらくしてから再度お試しください。',
+                                  ),
+                                ),
+                              );
+                            }
                           } else {
                             // モック環境でのテスト用
                             await ref

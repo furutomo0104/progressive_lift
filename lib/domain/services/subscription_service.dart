@@ -21,6 +21,14 @@ class SubscriptionService {
   bool _isInitialized = false;
   bool _mockIsPro = false; // デバッグ・API未設定環境用の状態
 
+  /// RevenueCat のキーが無い（開発中の）ときだけ true。本番ビルドでは常に false。
+  bool get isMockMode {
+    final apiKey = Platform.isIOS
+        ? _apiKeyApple
+        : (Platform.isAndroid ? _apiKeyGoogle : '');
+    return apiKey.trim().isEmpty;
+  }
+
   /// RevenueCat の初期化
   Future<void> init() async {
     if (_isInitialized) return;
