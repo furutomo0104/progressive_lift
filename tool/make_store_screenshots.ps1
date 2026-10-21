@@ -7,10 +7,10 @@ New-Item -ItemType Directory -Force $outDir | Out-Null
 
 $slides = @(
   @{ File = 'IMG_5311.PNG'; Main = '成長がひと目でわかる'; Sub = '重量と回数の推移を自動でグラフ化' },
+  @{ File = 'IMG_5315.PNG'; Main = '記録は重量と回数だけ'; Sub = '前回の記録を見ながら、その場で入力' },
   @{ File = 'IMG_5309.PNG'; Main = '毎日の記録をカレンダーで'; Sub = '鍛えた部位がひと目でわかる' },
-  @{ File = 'IMG_5310.PNG'; Main = '記録は重量と回数だけ'; Sub = 'その日のメニューをかんたん管理' },
-  @{ File = 'IMG_5312.PNG'; Main = '毎月の成長を分析'; Sub = '伸びた種目・停滞した種目をランクで評価' },
-  @{ File = 'IMG_5313.PNG'; Main = 'PROで全期間を見放題'; Sub = '広告なし・月額250円' }
+  @{ File = 'IMG_5310.PNG'; Main = 'その日のメニューをひと目で'; Sub = '種目ごとのセット数と最高重量を一覧' },
+  @{ File = 'IMG_5312.PNG'; Main = '毎月の成長を分析'; Sub = '伸びた種目・停滞した種目をランクで評価' }
 )
 
 $W = 1206

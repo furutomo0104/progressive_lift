@@ -136,7 +136,7 @@ class _PaywallSheet extends HookConsumerWidget {
               const SizedBox(height: 10),
             ] else ...[
               const Text(
-                '広告完全排除・専任AIコーチ・全期間データ閲覧',
+                '広告完全排除・専任AIコーチ・今日の推奨セット',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -171,10 +171,10 @@ class _PaywallSheet extends HookConsumerWidget {
                   ),
                   Divider(color: Colors.white10, height: 20),
                   _FeatureRow(
-                    icon: Icons.all_inclusive,
+                    icon: Icons.trending_up,
                     color: Colors.cyanAccent,
-                    title: '全期間の過去データ閲覧＆推移グラフ',
-                    subtitle: '3ヶ月以上前の過去記録・1RM成長推移を無制限に振り返り',
+                    title: 'AI 今日の推奨セット',
+                    subtitle: '過去の記録から、今日挑戦すべき重量と回数を自動提案',
                   ),
                 ],
               ),
