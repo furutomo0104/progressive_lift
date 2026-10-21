@@ -2,7 +2,6 @@ import 'package:isar/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:progressive_lift/data/models/custom_exercise_template.dart';
 import 'package:progressive_lift/data/local/isar_service.dart';
-import 'package:progressive_lift/data/local/seed_data.dart';
 import 'package:progressive_lift/data/repositories/workout_repository.dart';
 import 'package:progressive_lift/domain/models/exercise_list_item.dart';
 import 'package:progressive_lift/domain/models/month_overload_analysis.dart';
@@ -20,9 +19,7 @@ final isarServiceProvider = Provider<IsarService>((ref) => IsarService());
 @Riverpod(keepAlive: true)
 Future<Isar> isar(IsarRef ref) async {
   final service = ref.watch(isarServiceProvider);
-  final db = await service.db;
-  await SeedData.seedIfEmpty(db);
-  return db;
+  return service.db;
 }
 
 @Riverpod(keepAlive: true)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:progressive_lift/features/ads/interstitial_ad_service.dart';
+import 'package:progressive_lift/features/review/review_prompt_service.dart';
 import 'package:progressive_lift/features/workout/presentation/workout_record_panel.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 
@@ -53,4 +54,5 @@ Future<void> showDayWorkoutSheet(BuildContext context, DateTime day) async {
   final isPro =
       container.read(proSubscriptionNotifierProvider).valueOrNull ?? false;
   await InterstitialAdService.instance.showIfAllowed(isPro: isPro);
+  await ReviewPromptService.instance.maybeRequestAfterSession();
 }

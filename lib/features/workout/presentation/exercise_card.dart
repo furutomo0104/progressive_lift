@@ -6,6 +6,7 @@ import 'package:progressive_lift/data/models/exercise_record.dart';
 import 'package:progressive_lift/data/models/exercise_set.dart';
 import 'package:progressive_lift/domain/services/top_set_extractor.dart';
 import 'package:progressive_lift/features/exercise_detail/presentation/widgets/mini_top_set_chart.dart';
+import 'package:progressive_lift/features/review/review_prompt_service.dart';
 import 'package:progressive_lift/features/workout/presentation/reassign_exercise_record_sheet.dart';
 import 'package:progressive_lift/providers/app_providers.dart';
 import 'package:progressive_lift/shared/widgets/muscle_group_chip.dart';
@@ -57,6 +58,7 @@ class ExerciseCard extends HookConsumerWidget {
       if (!showMemoInput.value) memoCtrl.clear();
       ref.invalidate(topSetSeriesProvider(exercise.exerciseKey));
       onChanged();
+      ReviewPromptService.instance.onSetRecorded();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (repsFocus.canRequestFocus) repsFocus.requestFocus();
       });
